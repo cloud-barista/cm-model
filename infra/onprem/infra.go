@@ -17,13 +17,13 @@ type ServerProperty struct {
 }
 
 type CpuProperty struct {
-	Architecture string `json:"architecture" example:"x86_64"`
-	Cpus         uint32 `json:"cpus" validate:"required" example:"2"`     // Number of physical CPUs (sockets)
-	Cores        uint32 `json:"cores" validate:"required" example:"18"`   // Number of physical cores per CPU
-	Threads      uint32 `json:"threads" validate:"required" example:"36"` // Number of logical CPUs (threads) per CPU with hyper-threading enabled
-	MaxSpeed     uint32 `json:"maxSpeed,omitempty" example:"3.6"`         // Maximum speed in GHz
-	Vendor       string `json:"vendor,omitempty" example:"GenuineIntel"`
-	Model        string `json:"model,omitempty" example:"Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"`
+	Architecture string  `json:"architecture" example:"x86_64"`
+	Cpus         uint32  `json:"cpus" validate:"required" example:"2"`     // Number of physical CPUs (sockets)
+	Cores        uint32  `json:"cores" validate:"required" example:"18"`   // Number of physical cores per CPU
+	Threads      uint32  `json:"threads" validate:"required" example:"36"` // Number of logical CPUs (threads) per CPU with hyper-threading enabled
+	MaxSpeed     float32 `json:"maxSpeed,omitempty" example:"3.6"`         // Maximum speed in GHz
+	Vendor       string  `json:"vendor,omitempty" example:"GenuineIntel"`
+	Model        string  `json:"model,omitempty" example:"Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"`
 }
 
 type MemoryProperty struct {
@@ -49,8 +49,8 @@ type NetworkInterfaceProperty struct { // note: reference command `ifconfig`
 }
 
 type OsProperty struct { // note: reference command `cat /etc/os-release`
-	Version         string `json:"version" validate:"required" example:"22.04.3 LTS (Jammy Jellyfish)"` // Full version string
-	PrettyName      string `json:"prettyName,omitempty" example:"Ubuntu 22.04.3 LTS"`                   // Pretty name
+	PrettyName      string `json:"prettyName" validate:"required" example:"Ubuntu 22.04.3 LTS"` // Pretty name
+	Version         string `json:"version,omitempty" example:"22.04.3 LTS (Jammy Jellyfish)"`   // Full version string
 	Name            string `json:"name,omitempty" example:"Ubuntu"`
 	VersionID       string `json:"versionId,omitempty" example:"22.04"`
 	VersionCodename string `json:"versionCodename,omitempty" example:"jammy"`
