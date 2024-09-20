@@ -7,13 +7,25 @@ type OnPremInfra struct {
 }
 
 type ServerProperty struct {
-	Hostname   string                     `json:"hostname"`
-	CPU        CpuProperty                `json:"cpu"`
-	Memory     MemoryProperty             `json:"memory"`
-	RootDisk   DiskProperty               `json:"rootDisk"`
-	DataDisks  []DiskProperty             `json:"dataDisks,omitempty"`
-	Interfaces []NetworkInterfaceProperty `json:"interfaces"`
-	OS         OsProperty                 `json:"os"`
+	Hostname     string                     `json:"hostname"`
+	CPU          CpuProperty                `json:"cpu"`
+	Memory       MemoryProperty             `json:"memory"`
+	RootDisk     DiskProperty               `json:"rootDisk"`
+	DataDisks    []DiskProperty             `json:"dataDisks,omitempty"`
+	Interfaces   []NetworkInterfaceProperty `json:"interfaces"`
+	RoutingTable []RouteProperty            `json:"routingTable"`
+	OS           OsProperty                 `json:"os"`
+}
+
+type RouteProperty struct { // note: reference command `ip route`
+	Destination string `json:"destination,omitempty"` // Destination network, expressed in CIDR format
+	Gateway     string `json:"gateway,omitempty"`     // Gateway address to which packets are forwarded
+	Interface   string `json:"interface,omitempty"`   // Network interface associated with the route
+	Metric      int    `json:"metric,omitempty"`      // Metric value indicating the priority of the route
+	Protocol    string `json:"protocol,omitempty"`    // Protocol used to set the route (e.g., kernel, static)
+	Scope       string `json:"scope,omitempty"`       // Scope of the route (e.g., global, link, host)
+	Source      string `json:"source,omitempty"`      // Optionally stores the source address (used for policy-based routing)
+	LinkState   string `json:"linkState,omitempty"`   // Link state of the route (e.g., UP, DOWN)
 }
 
 type CpuProperty struct {
@@ -43,9 +55,13 @@ type DiskProperty struct { // note: reference command `df -h`
 }
 
 type NetworkInterfaceProperty struct { // note: reference command `ifconfig`
-	MacAddress string `json:"macAddress,omitempty"`
-	IpAddress  string `json:"ipAddress" validate:"required"`
-	Mtu        int    `json:"mtu,omitempty"` // Maximum Transmission Unit (MTU) in bytes
+	Name           string   `json:"name,omitempty" validate:"required"` // Interface name (e.g., eth0, ens01, enp0s3)
+	MacAddress     string   `json:"macAddress,omitempty"`               // MAC address
+	IPv4CidrBlocks []string `json:"ipv4CidrBlocks,omitempty"`           // IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask
+	IPv6CidrBlocks []string `json:"ipv6CidrBlocks,omitempty"`           // IPv6 address with prefix length (e.g., "2001:db8::1/64")
+	Mtu            int      `json:"mtu,omitempty"`                      // Maximum Transmission Unit (MTU) in bytes
+	State          string   `json:"state,omitempty"`                    // Interface state (e.g., UP, DOWN)
+	// TODO: Add or update fields (e.g., )
 }
 
 type OsProperty struct { // note: reference command `cat /etc/os-release`
@@ -59,6 +75,7 @@ type OsProperty struct { // note: reference command `cat /etc/os-release`
 }
 
 type NetworkProperty struct { // note: referrence command `ip route`
-	Gateway string `json:"gateway,omitempty" example:"172.26.240.0/20"` // Gateway IP address
+	IPv4Networks []string `json:"ipv4Networks,omitempty" example:"172.26.240.0/20"`
+	IPv6Networks []string `json:"ipv6Networks,omitempty"` // TBD
 	// TODO: Add or update fields
 }
