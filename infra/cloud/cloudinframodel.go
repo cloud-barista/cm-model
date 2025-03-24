@@ -1,15 +1,19 @@
 package cloudinframodel
 
+import (
+	software    "github.com/cloud-barista/cm-model/sw"
+)
+
 type CloudInfraModel struct {
 	OnpremiseInfraModel CloudInfra `json:"cloudInfraModel" validate:"required"`
 }
 
 type CloudInfra struct {
-	CloudEnv 	CloudEnvironment  `json:"cloudenvironment" validate:"required"`
-	Network 	NetworkProperty   `json:"network" validate:"required"`
-	VMs 		[]VMProperty 	  `json:"vms" validate:"required"`
-	Clusters    []ClusterProperty `json:"clusters,omitempty"`
-	// TODO: Add other fields
+	CloudEnv 			CloudEnvironment  `json:"cloudenvironment" validate:"required"`
+	Network 			NetworkProperty   `json:"network" validate:"required"`
+	VMs 				[]VMProperty 	  `json:"vms" validate:"required"`
+	Clusters    		[]ClusterProperty `json:"clusters,omitempty"`
+	SoftwareProperties 	[]software.SoftwareProperty 	`json:"software_properties"` // For CSP's managed software service.
 }
 
 type CSPType string
