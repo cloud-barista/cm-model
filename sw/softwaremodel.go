@@ -10,9 +10,9 @@ type Software struct {
 }
 
 type SoftwareProperty struct {
-	SoftwareName    	string            	`json:"software_name"`    // any software, e.g., "nginx", "nfs", "mysql"
-	Version 			string            	`json:"version"` // version of the software
-	Config          	SoftwareConfig    	`json:"config"`           // configuration settings for the software
+	SoftwareName    	string            	`json:"software_name"`  // any software, e.g., "nginx", "nfs", "mysql"
+	Version 			string            	`json:"version"` 		// version of the software
+	Config          	SoftwareConfig    	`json:"config"`         // configuration settings for the software
 
 	// Optional parameters for container and Kubernetes migration methods.
 	ContainerInfo  		*ContainerConfig  	`json:"container_info,omitempty"`
