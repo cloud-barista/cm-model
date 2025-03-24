@@ -65,12 +65,3 @@ type KubernetesConfig struct {
 	Policies    map[string]string            `json:"policies"` // any relevant policies.
 	ExtraConfig map[string]string 			 `json:"extra_config,omitempty"` // Additional Kubernetes configuration.
 }
-
-// // MigrationTask represents a complete migration process.
-// // It includes both the source and target environments and a set of software properties.
-// type MigrationTask struct {
-// 	TaskID             string             `json:"task_id"`
-// 	SourceEnvironment  Environment        `json:"source"`  // can be on-premise or cloud.
-// 	TargetEnvironment  Environment        `json:"target"`  // always a cloud environment.
-// 	SoftwareProperties []SoftwareProperty `json:"software_properties"`
-// }
