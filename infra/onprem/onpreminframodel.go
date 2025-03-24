@@ -1,4 +1,20 @@
-package inframodel
+package Onpreminframodel
+
+type OnpremiseInfraModel struct {
+	OnpremiseInfraModel OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+}
+
+type OnpremInfra struct {
+	Network NetworkProperty  `json:"network,omitempty"`
+	Servers []ServerProperty `json:"servers" validate:"required"`
+	// TODO: Add other fields
+}
+
+type NetworkProperty struct { // note: referrence command `ip route`
+	IPv4Networks  []string 		 `json:"ipv4Networks,omitempty" example:"172.26.240.0/20"`
+	IPv6Networks  []string 		 `json:"ipv6Networks,omitempty"` // TBD
+	// TODO: Add or update fields
+}
 
 type ServerProperty struct {
 	Hostname      string                      `json:"hostname"`
