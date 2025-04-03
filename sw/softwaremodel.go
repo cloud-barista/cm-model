@@ -13,21 +13,16 @@ type SoftwareProperty struct {
 	SoftwareName    	string            	`json:"software_name"`  // any software, e.g., "nginx", "nfs", "mysql"
 	Version 			string            	`json:"version"` 		// version of the software
 	Config          	SoftwareConfig    	`json:"config"`         // configuration settings for the software
-
-	// Optional parameters for container and Kubernetes migration methods.
-	ContainerInfo  		*ContainerConfig  	`json:"container_info,omitempty"`
-	KubernetesInfo 		*KubernetesConfig 	`json:"kubernetes_info,omitempty"`
-	
-	Methods       		[]MigrationMethod 	`json:"methods"` // supported migration methods
+	Methods       		MigrationMethod 	`json:"methods"` // supported migration methods
 }
 
 type Environment struct { // Computing environment
-	Type   		string            	`json:"type"` 		// e.g., "on-premise" or "cloud"
+	Type   		string            	`json:"type"` 	// e.g., "on-premise" or "cloud"
 	Provider 	string 			  	`json:"provider,omitempty"` // (if cloud) aws, azure, gcp, etc. 
 	Region   	string 				`json:"region,omitempty"`
 	Zone     	string 				`json:"zone,omitempty"`
 	OS       	OperatingSystem 	`json:"os"`
-	Config 		map[string]string 	`json:"config"`		// can include additional details such as network settings, credentials, etc.
+	Config 		map[string]string 	`json:"config"`	// can include additional details such as network settings, credentials, etc.
 }
 
 type OperatingSystem struct {
@@ -43,25 +38,13 @@ const (
 	MethodOSPackage  MigrationMethod = "os_package"  // Installing via OS package manager.
 	MethodContainer  MigrationMethod = "container"   // Installing as a container package.
 	MethodKubernetes MigrationMethod = "kubernetes"  // Installing as a Kubernetes package.
-	MethodManaged    MigrationMethod = "managed_csp" // Using the CSP's managed software service.
 )
 
 type SoftwareConfig struct {
-	// Settings can include environment variables, config file paths, ports, etc.
-	Settings 	map[string]string `json:"settings"`
-}
-
-type ContainerConfig struct {
-	Network     map[string]string            `json:"network"` // e.g., bridge, host, overlay, etc.
-	Volume      map[string]string            `json:"volume"`  // volume details or mount point info.
-	Image       map[string]string            `json:"image"`   // container image info.
-	ExtraConfig map[string]string 			 `json:"extra_config,omitempty"` // Additional container configuration.
-}
-
-type KubernetesConfig struct {
-	Cluster     map[string]string            `json:"cluster"`  // cluster name or identifier.
-	Network     map[string]string            `json:"network"`  // network settings or CNI configurations.
-	Volume      map[string]string            `json:"volume"`   // volume settings.
-	Policies    map[string]string            `json:"policies"` // any relevant policies.
-	ExtraConfig map[string]string 			 `json:"extra_config,omitempty"` // Additional Kubernetes configuration.
+	ConfigFiles 	[]string          `json:"config_files"`  // List of configuration file paths
+	ContentFiles 	[]string          `json:"content_files"` // List of additional content file paths
+    LogFiles     	[]string          `json:"log_files"`     // List of log file paths
+	ImageFiles     	[]string          `json:"image_files"`   // List of image file paths or binary file paths
+	K8sFiles     	[]string          `json:"k8s_files"`     // List of files related to the kubernetes environment	
+	Settings 		map[string]string `json:"settings"` // Can include environment variables, config file paths, ports, etc.
 }
