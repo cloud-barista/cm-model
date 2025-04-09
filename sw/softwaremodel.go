@@ -18,9 +18,6 @@ type SoftwareProperty struct {
 
 type Environment struct { // Computing environment
 	Type   		string            	`json:"type"` 	// e.g., "on-premise" or "cloud"
-	Provider 	string 			  	`json:"provider,omitempty"` // (if cloud) aws, azure, gcp, etc. 
-	Region   	string 				`json:"region,omitempty"`
-	Zone     	string 				`json:"zone,omitempty"`
 	OS       	OperatingSystem 	`json:"os"`
 	Config 		map[string]string 	`json:"config"`	// can include additional details such as network settings, credentials, etc.
 }
@@ -34,10 +31,10 @@ type OperatingSystem struct {
 type MigrationMethod string
 
 const (
-	MethodBinary     MigrationMethod = "binary"      // Moving the software as a binary executable.
 	MethodOSPackage  MigrationMethod = "os_package"  // Installing via OS package manager.
 	MethodContainer  MigrationMethod = "container"   // Installing as a container package.
 	MethodKubernetes MigrationMethod = "kubernetes"  // Installing as a Kubernetes package.
+	MethodBinary     MigrationMethod = "binary"      // Moving the software as a binary executable.
 )
 
 type SoftwareConfig struct {
@@ -46,5 +43,5 @@ type SoftwareConfig struct {
     LogFiles     	[]string          `json:"log_files"`     // List of log file paths
 	ImageFiles     	[]string          `json:"image_files"`   // List of image file paths or binary file paths
 	K8sFiles     	[]string          `json:"k8s_files"`     // List of files related to the kubernetes environment	
-	Settings 		map[string]string `json:"settings"` // Can include environment variables, config file paths, ports, etc.
+	Settings 		map[string]string `json:"settings"` // Can include environment variables, config file paths, ports, etc. (ex. Key/Value type)
 }
