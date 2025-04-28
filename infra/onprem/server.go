@@ -1,25 +1,4 @@
-package Onpreminframodel
-
-import (
-	cloudinfra  "github.com/cloud-barista/cm-model/infra/cloud"
-	software    "github.com/cloud-barista/cm-model/sw"
-)
-
-type OnpremiseInfraModel struct {
-	OnpremiseInfraModel OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
-}
-
-type OnpremInfra struct {
-	Network 			NetworkProperty  				`json:"network,omitempty"`
-	Servers 			[]ServerProperty 				`json:"servers" validate:"required"`
-	Clusters    		[]cloudinfra.ClusterProperty 	`json:"clusters,omitempty"`
-	SoftwareProperties 	[]software.SoftwareProperty 	`json:"software_properties"` // For CSP's managed software service.
-}
-
-type NetworkProperty struct { // note: referrence command `ip route`
-	IPv4Networks  []string 		 `json:"ipv4Networks,omitempty" example:"172.26.240.0/20"`
-	IPv6Networks  []string 		 `json:"ipv6Networks,omitempty"` // TBD
-}
+package inframodel
 
 type ServerProperty struct {
 	Hostname      string                      `json:"hostname"`
@@ -48,6 +27,7 @@ type MemoryProperty struct {
 	TotalSize uint64 `json:"totalSize" validate:"required" example:"128"` // Unit GiB
 	Available uint64 `json:"available,omitempty"`                         // Unit GiB
 	Used      uint64 `json:"used,omitempty"`                              // Unit GiB
+	// TODO: Add or update fields
 }
 
 type DiskProperty struct { // note: reference command `df -h`
@@ -65,6 +45,7 @@ type NetworkInterfaceProperty struct { // note: reference command `ifconfig`
 	IPv6CidrBlocks []string `json:"ipv6CidrBlocks,omitempty"`           // IPv6 address with prefix length (e.g., "2001:db8::1/64")
 	Mtu            int      `json:"mtu,omitempty"`                      // Maximum Transmission Unit (MTU) in bytes
 	State          string   `json:"state,omitempty"`                    // Interface state (e.g., UP, DOWN)
+	// TODO: Add or update fields (e.g., )
 }
 
 type RouteProperty struct { // note: reference command `ip route`
