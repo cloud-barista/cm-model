@@ -1,15 +1,15 @@
 package inframodel
 
 type ServerProperty struct {
-	Hostname      string                      `json:"hostname"`
-	CPU           CpuProperty                 `json:"cpu"`
-	Memory        MemoryProperty              `json:"memory"`
-	RootDisk      DiskProperty                `json:"rootDisk"`
-	DataDisks     []DiskProperty              `json:"dataDisks,omitempty"`
-	Interfaces    []NetworkInterfaceProperty  `json:"interfaces"`
-	RoutingTable  []RouteProperty             `json:"routingTable"`
-	FirewallRules []FirewallRuleProperty 	  `json:"firewallRules,omitempty"`
-	OS            OsProperty                  `json:"os"`
+	Hostname      string                     `json:"hostname"`
+	CPU           CpuProperty                `json:"cpu"`
+	Memory        MemoryProperty             `json:"memory"`
+	RootDisk      DiskProperty               `json:"rootDisk"`
+	DataDisks     []DiskProperty             `json:"dataDisks,omitempty"`
+	Interfaces    []NetworkInterfaceProperty `json:"interfaces"`
+	RoutingTable  []RouteProperty            `json:"routingTable"`
+	FirewallRules []FirewallRuleProperty     `json:"firewallRules,omitempty"`
+	OS            OsProperty                 `json:"os"`
 }
 
 type CpuProperty struct {
