@@ -63,7 +63,8 @@ type Binary struct {
 	IsStatic          bool                 `json:"is_static" validate:"required"`
 	LibraryPaths      []string             `json:"library_paths"`
 	CustomConfigPaths []string             `json:"custom_config_paths"`
-	ServiceInfo       Service              `json:"service_info"` // Provide service information if the binary run by the service
+	ConnectionInfo    ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
+	ServiceInfo       Service              `json:"service_info"`    // Provide service information if the binary run by the service
 }
 
 type SoftwarePackageType string
@@ -87,7 +88,8 @@ type Package struct {
 	RepoURL              string               `json:"repo_url"`
 	GPGKeyURL            string               `json:"gpg_key_url"`
 	RepoUseOSVersionCode bool                 `json:"repo_use_os_version_code" default:"false"`
-	ServiceInfo          Service              `json:"service_info"` // Provide service information if the package uses service
+	ConnectionInfo       ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
+	ServiceInfo          Service              `json:"service_info"`    // Provide service information if the package uses service
 }
 
 type Container struct {
@@ -102,7 +104,8 @@ type Container struct {
 	Envs              []Env           `json:"envs"`
 	NetworkMode       string          `json:"network_mode,omitempty" validate:"required"`
 	RestartPolicy     string          `json:"restart_policy,omitempty" validate:"required"`
-	ServiceInfo       Service         `json:"service_info"` // Provide service information if the container run by the service
+	ConnectionInfo    ConnectionInfo  `json:"connection_info"` // Connection information if needed for software migration
+	ServiceInfo       Service         `json:"service_info"`    // Provide service information if the container run by the service
 }
 
 type ContainerImage struct {
@@ -134,17 +137,16 @@ type KubernetesHelm struct {
 }
 
 type Service struct {
-	ServiceName           string                `json:"service_name,omitempty" validate:"required"`
-	ServiceStatus         string                `json:"service_status,omitempty" validate:"required"`
-	ServiceEnabled        bool                  `json:"service_enabled,omitempty" validate:"required"`
-	ServiceFilePath       string                `json:"service_file_path,omitempty" validate:"required"`
-	ServiceUser           string                `json:"service_user"`  // User permission of the service
-	ServiceGroup          string                `json:"service_group"` // Group permission of the service
-	ServiceDependencies   []Service             `json:"service_dependencies" validate:"required"`
-	ServiceConnectionInfo ServiceConnectionInfo `json:"service_connection_info"` // Connection information of the service
+	ServiceName         string    `json:"service_name,omitempty" validate:"required"`
+	ServiceStatus       string    `json:"service_status,omitempty" validate:"required"`
+	ServiceEnabled      bool      `json:"service_enabled,omitempty" validate:"required"`
+	ServiceFilePath     string    `json:"service_file_path,omitempty" validate:"required"`
+	ServiceUser         string    `json:"service_user"`  // User permission of the service
+	ServiceGroup        string    `json:"service_group"` // Group permission of the service
+	ServiceDependencies []Service `json:"service_dependencies" validate:"required"`
 }
 
-type ServiceConnectionInfo struct {
+type ConnectionInfo struct {
 	ListenPorts []Port `json:"listen_ports"`
 	User        User   `json:"user"`
 }
