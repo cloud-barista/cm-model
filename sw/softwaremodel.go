@@ -59,6 +59,7 @@ type Binary struct {
 	Index             SoftwareIndex        `json:"index,omitempty" validate:"required"`
 	IndexDepends      []SoftwareIndex      `json:"index_depends" validate:"required"` // Migration dependencies (Migrations will be processed first in this list.)
 	BinaryPath        string               `json:"binary_path,omitempty" validate:"required"`
+	Version           string               `json:"version"`
 	Architecture      SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
 	IsStatic          bool                 `json:"is_static" validate:"required"`
 	LibraryPaths      []string             `json:"library_paths"`
