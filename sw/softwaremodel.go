@@ -17,8 +17,9 @@ type Software struct {
 type BinaryInfo struct {
 	Index             SoftwareIndex        `json:"index,omitempty" validate:"required"`
 	IndexDepends      []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	Name              string               `json:"name,omitempty" validate:"required"`
+	Version           string               `json:"version,omitempty" validate:"required"`
 	BinaryPath        string               `json:"binary_path,omitempty" validate:"required"`
-	Version           string               `json:"version"`
 	Architecture      SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
 	IsStatic          bool                 `json:"is_static" validate:"required"`
 	LibraryPaths      []string             `json:"library_paths"`
@@ -29,10 +30,10 @@ type BinaryInfo struct {
 
 type PackageInfo struct {
 	Index                SoftwareIndex        `json:"index,omitempty" validate:"required"`
-	IndexDepends         []SoftwareIndex      `json:"index_depends"`                             // Migration dependencies (Migrations will be processed first in this list.)
-	SoftwarePackageType  SoftwarePackageType  `json:"software_package_type" validate:"required"` // deb / rpm
+	IndexDepends         []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
 	Name                 string               `json:"name,omitempty" validate:"required"`
 	Version              string               `json:"version,omitempty" validate:"required"`
+	SoftwarePackageType  SoftwarePackageType  `json:"software_package_type" validate:"required"` // deb / rpm
 	OS                   string               `json:"os,omitempty"`
 	OSVersion            string               `json:"os_version,omitempty"`
 	Architecture         SoftwareArchitecture `json:"architecture,omitempty"`
@@ -48,9 +49,9 @@ type PackageInfo struct {
 
 type ContainerInfo struct {
 	Index             SoftwareIndex   `json:"index,omitempty" validate:"required"`
-	IndexDepends      []SoftwareIndex `json:"index_depends"`                         // Migration dependencies (Migrations will be processed first in this list.)
+	IndexDepends      []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	Name              string          `json:"name,omitempty" validate:"required"`
 	Runtime           string          `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman, ...)
-	ContainerName     string          `json:"container_name,omitempty" validate:"required"`
 	ContainerImage    ContainerImage  `json:"container_image,omitempty" validate:"required"`
 	ContainerPorts    []ContainerPort `json:"container_ports"`
 	ContainerStatus   string          `json:"container_status" validate:"required"`
@@ -72,16 +73,17 @@ type KubernetesInfo struct {
 type KubernetesResourceInfo struct {
 	Index        SoftwareIndex   `json:"index,omitempty" validate:"required"`
 	IndexDepends []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	Name         string          `json:"name,omitempty" validate:"required"`
 	Namespace    string          `json:"namespace" validate:"required"`
 	Kind         string          `json:"kind" validate:"required"`
-	Name         string          `json:"name" validate:"required"`
 }
 
 type KubernetesHelmInfo struct {
 	Index          SoftwareIndex   `json:"index,omitempty" validate:"required"`
 	IndexDepends   []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	Name           string          `json:"name,omitempty" validate:"required"`
+	Version        string          `json:"version,omitempty" validate:"required"` // Same as release
 	RepoURL        string          `json:"repo_url" validate:"required"`
-	Release        string          `json:"release" validate:"required"`
 	HelmChartPath  string          `json:"helm_chart_path" validate:"required"`
 	HelmValuesYAML string          `json:"helm_values_yaml"`
 }
