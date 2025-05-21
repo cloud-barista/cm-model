@@ -76,6 +76,7 @@ type KubernetesResourceInfo struct {
 	Name         string          `json:"name,omitempty" validate:"required"`
 	Namespace    string          `json:"namespace" validate:"required"`
 	Kind         string          `json:"kind" validate:"required"`
+	YAML         string          `json:"yaml" validate:"required"`
 }
 
 type KubernetesHelmInfo struct {
