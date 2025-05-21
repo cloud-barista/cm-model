@@ -46,7 +46,6 @@ type PackageInfo struct {
 
 type ContainerInfo struct {
 	Runtime    string      `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman, ...)
-	Registries []string    `json:"registries"`                            // Registries setting configured in the host
 	Containers []Container `json:"containers"`
 }
 
