@@ -6,19 +6,42 @@ type SoftwareModel struct {
 
 type Software struct {
 	HostEnvs       []Env          `json:"host_envs"`
-	BinaryInfo     BinaryInfo     `json:"binaryInfo"`
-	PackageInfo    PackageInfo    `json:"package_info"`
+	BinaryInfo     []BinaryInfo   `json:"binaryInfo"`
+	PackageInfo    []PackageInfo  `json:"package_info"`
 	ContainerInfo  ContainerInfo  `json:"container_info"`
 	KubernetesInfo KubernetesInfo `json:"kubernetes_info"`
 }
 
 type BinaryInfo struct {
-	Binaries []Binary `json:"binaries"`
+	Index             SoftwareIndex        `json:"index,omitempty" validate:"required"`
+	IndexDepends      []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	BinaryPath        string               `json:"binary_path,omitempty" validate:"required"`
+	Version           string               `json:"version"`
+	Architecture      SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
+	IsStatic          bool                 `json:"is_static" validate:"required"`
+	LibraryPaths      []string             `json:"library_paths"`
+	CustomConfigPaths []string             `json:"custom_config_paths"`
+	ConnectionInfo    ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
+	ServiceInfo       Service              `json:"service_info"`    // Provide service information if the binary run by the service
 }
 
 type PackageInfo struct {
-	SoftwarePackageType SoftwarePackageType `json:"software_package_type" validate:"required"` // deb / rpm
-	Packages            []Package           `json:"packages"`
+	Index                SoftwareIndex        `json:"index,omitempty" validate:"required"`
+	IndexDepends         []SoftwareIndex      `json:"index_depends"`                             // Migration dependencies (Migrations will be processed first in this list.)
+	SoftwarePackageType  SoftwarePackageType  `json:"software_package_type" validate:"required"` // deb / rpm
+	Name                 string               `json:"name,omitempty" validate:"required"`
+	Version              string               `json:"version,omitempty" validate:"required"`
+	OS                   string               `json:"os,omitempty"`
+	OSVersion            string               `json:"os_version,omitempty"`
+	Architecture         SoftwareArchitecture `json:"architecture,omitempty"`
+	NeededPackages       []string             `json:"needed_packages"`         // Packages need to install with this package
+	NeedToDeletePackages []string             `json:"need_to_delete_packages"` // Packages need to delete before installation
+	CustomConfigPaths    []string             `json:"custom_config_paths"`     // Need to copy config paths (ex: /etc/exports for NFS Server)
+	RepoURL              string               `json:"repo_url"`
+	GPGKeyURL            string               `json:"gpg_key_url"`
+	RepoUseOSVersionCode bool                 `json:"repo_use_os_version_code" default:"false"`
+	ConnectionInfo       ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
+	ServiceInfo          Service              `json:"service_info"`    // Provide service information if the package uses service
 }
 
 type ContainerInfo struct {
@@ -55,43 +78,12 @@ const (
 	SoftwareArchitectureARM64  SoftwareArchitecture = "arm64"
 )
 
-type Binary struct {
-	Index             SoftwareIndex        `json:"index,omitempty" validate:"required"`
-	IndexDepends      []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
-	BinaryPath        string               `json:"binary_path,omitempty" validate:"required"`
-	Version           string               `json:"version"`
-	Architecture      SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
-	IsStatic          bool                 `json:"is_static" validate:"required"`
-	LibraryPaths      []string             `json:"library_paths"`
-	CustomConfigPaths []string             `json:"custom_config_paths"`
-	ConnectionInfo    ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
-	ServiceInfo       Service              `json:"service_info"`    // Provide service information if the binary run by the service
-}
-
 type SoftwarePackageType string
 
 const (
 	SoftwarePackageTypeDEB SoftwarePackageType = "deb"
 	SoftwarePackageTypeRPM SoftwarePackageType = "rpm"
 )
-
-type Package struct {
-	Index                SoftwareIndex        `json:"index,omitempty" validate:"required"`
-	IndexDepends         []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
-	Name                 string               `json:"name,omitempty" validate:"required"`
-	Version              string               `json:"version,omitempty" validate:"required"`
-	OS                   string               `json:"os,omitempty"`
-	OSVersion            string               `json:"os_version,omitempty"`
-	Architecture         SoftwareArchitecture `json:"architecture,omitempty"`
-	NeededPackages       []string             `json:"needed_packages"`         // Packages need to install with this package
-	NeedToDeletePackages []string             `json:"need_to_delete_packages"` // Packages need to delete before installation
-	CustomConfigPaths    []string             `json:"custom_config_paths"`     // Need to copy config paths (ex: /etc/exports for NFS Server)
-	RepoURL              string               `json:"repo_url"`
-	GPGKeyURL            string               `json:"gpg_key_url"`
-	RepoUseOSVersionCode bool                 `json:"repo_use_os_version_code" default:"false"`
-	ConnectionInfo       ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
-	ServiceInfo          Service              `json:"service_info"`    // Provide service information if the package uses service
-}
 
 type Container struct {
 	Index             SoftwareIndex   `json:"index,omitempty" validate:"required"`
