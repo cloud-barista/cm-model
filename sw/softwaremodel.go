@@ -6,7 +6,7 @@ type SoftwareModel struct {
 
 type Software struct {
 	HostEnvs                []Env                    `json:"host_envs"`
-	BinaryInfos             []BinaryInfo             `json:"binaryInfo"`
+	BinaryInfos             []BinaryInfo             `json:"binary_infos"`
 	PackageInfos            []PackageInfo            `json:"package_infos"`
 	ContainerInfos          []ContainerInfo          `json:"container_infos"`
 	KubernetesInfo          KubernetesInfo           `json:"kubernetes_infos"`
