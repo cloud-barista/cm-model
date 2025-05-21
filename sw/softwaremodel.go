@@ -121,6 +121,7 @@ type ContainerImage struct {
 	ImageName         string               `json:"image_name" validate:"required"`
 	ImageVersion      string               `json:"image_version" validate:"required"`
 	ImageArchitecture SoftwareArchitecture `json:"image_architecture" validate:"required"`
+	ImageHash         string               `json:"image_hash" validate:"required"`
 }
 
 type ContainerPort struct {
