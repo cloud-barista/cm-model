@@ -5,11 +5,11 @@ type SoftwareModel struct {
 }
 
 type Software struct {
-	HostEnvs       []Env          `json:"host_envs"`
-	BinaryInfo     []BinaryInfo   `json:"binaryInfo"`
-	PackageInfo    []PackageInfo  `json:"package_info"`
-	ContainerInfo  ContainerInfo  `json:"container_info"`
-	KubernetesInfo KubernetesInfo `json:"kubernetes_info"`
+	HostEnvs       []Env           `json:"host_envs"`
+	BinaryInfo     []BinaryInfo    `json:"binaryInfo"`
+	PackageInfo    []PackageInfo   `json:"package_info"`
+	ContainerInfo  []ContainerInfo `json:"container_info"`
+	KubernetesInfo KubernetesInfo  `json:"kubernetes_info"`
 }
 
 type BinaryInfo struct {
@@ -45,8 +45,20 @@ type PackageInfo struct {
 }
 
 type ContainerInfo struct {
-	Runtime    string      `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman, ...)
-	Containers []Container `json:"containers"`
+	Index             SoftwareIndex   `json:"index,omitempty" validate:"required"`
+	IndexDepends      []SoftwareIndex `json:"index_depends"`                         // Migration dependencies (Migrations will be processed first in this list.)
+	Runtime           string          `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman, ...)
+	ContainerName     string          `json:"container_name,omitempty" validate:"required"`
+	ContainerImage    ContainerImage  `json:"container_image,omitempty" validate:"required"`
+	ContainerPorts    []ContainerPort `json:"container_ports"`
+	ContainerStatus   string          `json:"container_status" validate:"required"`
+	DockerComposePath string          `json:"docker_compose_path"`
+	MountPaths        []string        `json:"mount_paths"`
+	Envs              []Env           `json:"envs"`
+	NetworkMode       string          `json:"network_mode,omitempty" validate:"required"`
+	RestartPolicy     string          `json:"restart_policy,omitempty" validate:"required"`
+	ConnectionInfo    ConnectionInfo  `json:"connection_info"` // Connection information if needed for software migration
+	ServiceInfo       Service         `json:"service_info"`    // Provide service information if the container run by the service
 }
 
 type KubernetesInfo struct {
@@ -83,22 +95,6 @@ const (
 	SoftwarePackageTypeDEB SoftwarePackageType = "deb"
 	SoftwarePackageTypeRPM SoftwarePackageType = "rpm"
 )
-
-type Container struct {
-	Index             SoftwareIndex   `json:"index,omitempty" validate:"required"`
-	IndexDepends      []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
-	ContainerName     string          `json:"container_name,omitempty" validate:"required"`
-	ContainerImage    ContainerImage  `json:"container_image,omitempty" validate:"required"`
-	ContainerPorts    []ContainerPort `json:"container_ports"`
-	ContainerStatus   string          `json:"container_status" validate:"required"`
-	DockerComposePath string          `json:"docker_compose_path"`
-	MountPaths        []string        `json:"mount_paths"`
-	Envs              []Env           `json:"envs"`
-	NetworkMode       string          `json:"network_mode,omitempty" validate:"required"`
-	RestartPolicy     string          `json:"restart_policy,omitempty" validate:"required"`
-	ConnectionInfo    ConnectionInfo  `json:"connection_info"` // Connection information if needed for software migration
-	ServiceInfo       Service         `json:"service_info"`    // Provide service information if the container run by the service
-}
 
 type ContainerImage struct {
 	ImageName         string               `json:"image_name" validate:"required"`
