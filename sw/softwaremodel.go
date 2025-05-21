@@ -5,11 +5,13 @@ type SoftwareModel struct {
 }
 
 type Software struct {
-	HostEnvs       []Env           `json:"host_envs"`
-	BinaryInfo     []BinaryInfo    `json:"binaryInfo"`
-	PackageInfo    []PackageInfo   `json:"package_info"`
-	ContainerInfo  []ContainerInfo `json:"container_info"`
-	KubernetesInfo KubernetesInfo  `json:"kubernetes_info"`
+	HostEnvs                []Env                    `json:"host_envs"`
+	BinaryInfos             []BinaryInfo             `json:"binaryInfo"`
+	PackageInfos            []PackageInfo            `json:"package_infos"`
+	ContainerInfos          []ContainerInfo          `json:"container_infos"`
+	KubernetesInfo          KubernetesInfo           `json:"kubernetes_infos"`
+	KubernetesResourceInfos []KubernetesResourceInfo `json:"kubernetes_resource_infos"`
+	KubernetesHelmInfos     []KubernetesHelmInfo     `json:"kubernetes_helm_infos"`
 }
 
 type BinaryInfo struct {
@@ -62,10 +64,26 @@ type ContainerInfo struct {
 }
 
 type KubernetesInfo struct {
-	KubernetesVersion string               `json:"kubernetes_version,omitempty" validate:"required"`
-	KubeConfigYAML    string               `json:"kube_config_yaml,omitempty" validate:"required"`
-	Resources         []KubernetesResource `json:"resources,omitempty" validate:"required"`
-	Helms             []KubernetesHelm     `json:"helms"`
+	KubernetesVersion          string `json:"kubernetes_version,omitempty" validate:"required"`
+	KubeConfigYAML             string `json:"kube_config_yaml,omitempty" validate:"required"`
+	KubernetesContainerRuntime string `json:"kubernetes_container_runtime,omitempty" validate:"required"`
+}
+
+type KubernetesResourceInfo struct {
+	Index        SoftwareIndex   `json:"index,omitempty" validate:"required"`
+	IndexDepends []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	Namespace    string          `json:"namespace" validate:"required"`
+	Kind         string          `json:"kind" validate:"required"`
+	Name         string          `json:"name" validate:"required"`
+}
+
+type KubernetesHelmInfo struct {
+	Index          SoftwareIndex   `json:"index,omitempty" validate:"required"`
+	IndexDepends   []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
+	RepoURL        string          `json:"repo_url" validate:"required"`
+	Release        string          `json:"release" validate:"required"`
+	HelmChartPath  string          `json:"helm_chart_path" validate:"required"`
+	HelmValuesYAML string          `json:"helm_values_yaml"`
 }
 
 type SoftwareType string
@@ -107,21 +125,6 @@ type ContainerPort struct {
 	Protocol      string `json:"protocol" validate:"required"`       // NetworkSettings.Ports.{Port}/{Protocol} -> {Protocol}
 	HostIP        string `json:"host_ip" validate:"required"`        // NetworkSettings.Ports.{Port}/{Protocol}.HostIp
 	HostPort      int    `json:"host_port" validate:"required"`      // NetworkSettings.Ports.{Port}/{Protocol}.HostPort
-}
-
-type KubernetesResource struct {
-	Index        SoftwareIndex   `json:"index,omitempty" validate:"required"`
-	IndexDepends []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
-	Namespace    string          `json:"namespace" validate:"required"`
-	Kind         string          `json:"kind" validate:"required"`
-	Name         string          `json:"name" validate:"required"`
-}
-
-type KubernetesHelm struct {
-	RepoURL        string `json:"repo_url" validate:"required"`
-	Release        string `json:"release" validate:"required"`
-	HelmChartPath  string `json:"helm_chart_path" validate:"required"`
-	HelmValuesYAML string `json:"helm_values_yaml"`
 }
 
 type Service struct {
