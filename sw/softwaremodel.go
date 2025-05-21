@@ -5,26 +5,26 @@ type SoftwareModel struct {
 }
 
 type Software struct {
-	HostEnvs       []Env          `json:"host_envs" validate:"required"`
+	HostEnvs       []Env          `json:"host_envs"`
 	BinaryInfo     BinaryInfo     `json:"binaryInfo"`
-	PackageInfo    PackageInfo    `json:"package_info" validate:"required"`
-	ContainerInfo  ContainerInfo  `json:"container_info" validate:"required"`
-	KubernetesInfo KubernetesInfo `json:"kubernetes_info" validate:"required"`
+	PackageInfo    PackageInfo    `json:"package_info"`
+	ContainerInfo  ContainerInfo  `json:"container_info"`
+	KubernetesInfo KubernetesInfo `json:"kubernetes_info"`
 }
 
 type BinaryInfo struct {
-	Binaries []Binary `json:"binaries" validate:"required"`
+	Binaries []Binary `json:"binaries"`
 }
 
 type PackageInfo struct {
 	SoftwarePackageType SoftwarePackageType `json:"software_package_type" validate:"required"` // deb / rpm
-	Packages            []Package           `json:"packages" validate:"required"`
+	Packages            []Package           `json:"packages"`
 }
 
 type ContainerInfo struct {
 	Runtime    string      `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman, ...)
 	Registries []string    `json:"registries"`                            // Registries setting configured in the host
-	Containers []Container `json:"containers" validate:"required"`
+	Containers []Container `json:"containers"`
 }
 
 type KubernetesInfo struct {
@@ -57,7 +57,7 @@ const (
 
 type Binary struct {
 	Index             SoftwareIndex        `json:"index,omitempty" validate:"required"`
-	IndexDepends      []SoftwareIndex      `json:"index_depends" validate:"required"` // Migration dependencies (Migrations will be processed first in this list.)
+	IndexDepends      []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
 	BinaryPath        string               `json:"binary_path,omitempty" validate:"required"`
 	Version           string               `json:"version"`
 	Architecture      SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
@@ -77,15 +77,15 @@ const (
 
 type Package struct {
 	Index                SoftwareIndex        `json:"index,omitempty" validate:"required"`
-	IndexDepends         []SoftwareIndex      `json:"index_depends" validate:"required"` // Migration dependencies (Migrations will be processed first in this list.)
+	IndexDepends         []SoftwareIndex      `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
 	Name                 string               `json:"name,omitempty" validate:"required"`
 	Version              string               `json:"version,omitempty" validate:"required"`
-	OS                   string               `json:"os,omitempty" validate:"required"`
-	OSVersion            string               `json:"os_version,omitempty" validate:"required"`
-	Architecture         SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
-	NeededPackages       []string             `json:"needed_packages" validate:"required"` // Packages need to install with this package
-	NeedToDeletePackages []string             `json:"need_to_delete_packages"`             // Packages need to delete before installation
-	CustomConfigPaths    []string             `json:"custom_config_paths"`                 // Need to copy config paths (ex: /etc/exports for NFS Server)
+	OS                   string               `json:"os,omitempty"`
+	OSVersion            string               `json:"os_version,omitempty"`
+	Architecture         SoftwareArchitecture `json:"architecture,omitempty"`
+	NeededPackages       []string             `json:"needed_packages"`         // Packages need to install with this package
+	NeedToDeletePackages []string             `json:"need_to_delete_packages"` // Packages need to delete before installation
+	CustomConfigPaths    []string             `json:"custom_config_paths"`     // Need to copy config paths (ex: /etc/exports for NFS Server)
 	RepoURL              string               `json:"repo_url"`
 	GPGKeyURL            string               `json:"gpg_key_url"`
 	RepoUseOSVersionCode bool                 `json:"repo_use_os_version_code" default:"false"`
@@ -95,7 +95,7 @@ type Package struct {
 
 type Container struct {
 	Index             SoftwareIndex   `json:"index,omitempty" validate:"required"`
-	IndexDepends      []SoftwareIndex `json:"index_depends" validate:"required"` // Migration dependencies (Migrations will be processed first in this list.)
+	IndexDepends      []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
 	ContainerName     string          `json:"container_name,omitempty" validate:"required"`
 	ContainerImage    ContainerImage  `json:"container_image,omitempty" validate:"required"`
 	ContainerPorts    []ContainerPort `json:"container_ports"`
@@ -124,7 +124,7 @@ type ContainerPort struct {
 
 type KubernetesResource struct {
 	Index        SoftwareIndex   `json:"index,omitempty" validate:"required"`
-	IndexDepends []SoftwareIndex `json:"index_depends" validate:"required"` // Migration dependencies (Migrations will be processed first in this list.)
+	IndexDepends []SoftwareIndex `json:"index_depends"` // Migration dependencies (Migrations will be processed first in this list.)
 	Namespace    string          `json:"namespace" validate:"required"`
 	Kind         string          `json:"kind" validate:"required"`
 	Name         string          `json:"name" validate:"required"`
@@ -134,7 +134,7 @@ type KubernetesHelm struct {
 	RepoURL        string `json:"repo_url" validate:"required"`
 	Release        string `json:"release" validate:"required"`
 	HelmChartPath  string `json:"helm_chart_path" validate:"required"`
-	HelmValuesYAML string `json:"helm_values_yaml" validate:"required"`
+	HelmValuesYAML string `json:"helm_values_yaml"`
 }
 
 type Service struct {
@@ -144,7 +144,7 @@ type Service struct {
 	ServiceFilePath     string    `json:"service_file_path,omitempty" validate:"required"`
 	ServiceUser         string    `json:"service_user"`  // User permission of the service
 	ServiceGroup        string    `json:"service_group"` // Group permission of the service
-	ServiceDependencies []Service `json:"service_dependencies" validate:"required"`
+	ServiceDependencies []Service `json:"service_dependencies"`
 }
 
 type ConnectionInfo struct {
@@ -165,5 +165,5 @@ type Port struct {
 
 type Env struct {
 	Name  string `json:"name,omitempty" validate:"required"`
-	Value string `json:"value,omitempty" validate:"required"`
+	Value string `json:"value,omitempty"`
 }
