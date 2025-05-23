@@ -23,9 +23,10 @@ type BinaryInfo struct {
 	Architecture      SoftwareArchitecture `json:"architecture,omitempty" validate:"required"`
 	IsStatic          bool                 `json:"is_static" validate:"required"`
 	LibraryPaths      []string             `json:"library_paths"`
-	CustomConfigPaths []string             `json:"custom_config_paths"`
-	ConnectionInfo    ConnectionInfo       `json:"connection_info"` // Connection information if needed for software migration
-	ServiceInfo       Service              `json:"service_info"`    // Provide service information if the binary run by the service
+	CustomConfigPaths []string             `json:"custom_config_paths"` // Any custom_config_paths that fall under custom_data_paths will be ignored.
+	CustomDataPaths   []string             `json:"custom_data_paths"`   // Custom paths to copy data.
+	ConnectionInfo    ConnectionInfo       `json:"connection_info"`     // Connection information if needed for software migration
+	ServiceInfo       Service              `json:"service_info"`        // Provide service information if the binary run by the service
 }
 
 type PackageInfo struct {
@@ -38,8 +39,9 @@ type PackageInfo struct {
 	OSVersion            string               `json:"os_version,omitempty"`
 	Architecture         SoftwareArchitecture `json:"architecture,omitempty"`
 	NeededPackages       []string             `json:"needed_packages"`         // Packages need to install with this package
-	NeedToDeletePackages []string             `json:"need_to_delete_packages"` // Packages need to delete before installation
-	CustomConfigPaths    []string             `json:"custom_config_paths"`     // Need to copy config paths (ex: /etc/exports for NFS Server)
+	NeedToDeletePackages []string             `json:"need_to_delete_packages"` // Packages need to delete it before installation
+	CustomConfigPaths    []string             `json:"custom_config_paths"`     // Need to copy config paths. (ex: /etc/exports for NFS Server) Any custom_config_paths that fall under custom_data_paths will be ignored.
+	CustomDataPaths      []string             `json:"custom_data_paths"`       // Custom paths to copy data.
 	RepoURL              string               `json:"repo_url"`
 	GPGKeyURL            string               `json:"gpg_key_url"`
 	RepoUseOSVersionCode bool                 `json:"repo_use_os_version_code" default:"false"`
