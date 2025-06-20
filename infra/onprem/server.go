@@ -61,10 +61,10 @@ type RouteProperty struct { // note: reference command `ip route`
 
 type FirewallRuleProperty struct { // note: reference command `iptables -v -t filter -S`
 	SrcCIDR   string `json:"srcCIDR,omitempty"`   // e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-	SrcPorts  string `json:"srcPorts,omitempty"`  // e.g., "80", "80,443", "1024-65535"
+	SrcPorts  string `json:"srcPorts,omitempty"`  // e.g., "80", "80,443", "1024-65535", "*" (for all ports)
 	DstCIDR   string `json:"dstCIDR,omitempty"`   // e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-	DstPorts  string `json:"dstPorts,omitempty"`  // e.g., "80", "80,443", "1024-65535"
-	Protocol  string `json:"protocol,omitempty"`  // e.g., TCP, UDP, ICMP
+	DstPorts  string `json:"dstPorts,omitempty"`  // e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+	Protocol  string `json:"protocol,omitempty"`  // e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
 	Direction string `json:"direction,omitempty"` // e.g., inbound, outbound
 	Action    string `json:"action,omitempty"`    // e.g., allow, deny
 }
