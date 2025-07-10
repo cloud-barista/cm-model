@@ -4,21 +4,15 @@ package inframodel
 // In other perspective, it can be a network for servers and/or a collection of networks extracted from a host.//
 // * [Important] Information in the IPv4Networks list should be as non-duplicated as possible.
 type NetworkProperty struct { // note: reference command `ip route`, `netstat -rn`, and `lshw -c network`
-	IPv4Networks []NetworkDetail `json:"ipv4Networks,omitempty"`
-	IPv6Networks []NetworkDetail `json:"ipv6Networks,omitempty"` // TBD
+	IPv4Networks NetworkDetail `json:"ipv4Networks,omitempty"`
+	IPv6Networks NetworkDetail `json:"ipv6Networks,omitempty"` // TBD
 	// TODO: Add or update fields
 }
 
-// NetworkDetail represents DefaultGateway and DefaultRouteInterface
-// - DefaultGateway info: extracted from a host.
-// - DefaultRouteInterface info: extracted from a host based on "the DefaultGateway IFace name".
+// NetworkDetail represents a collection of the default route interfaces extracted from each host.
+// Note: A network admin/operator "manually" inputs CIDR blocks (e.g., 10.0.0.0/16) of their networks.
+// Note: The DefaultGatewayRouteRules are "extracted" from each host and is used to estimate the upper layer address space of the network.
 type NetworkDetail struct {
-	DefaultGateway        GatewayProperty          `json:"gateway,omitempty"`
-	DefaultRouteInterface NetworkInterfaceProperty `json:"defaultRouteInterface,omitempty"`
-}
-
-type GatewayProperty struct {
-	IP            string `json:"ip,omitempty" example:"192.168.1.1"`
-	InterfaceName string `json:"interfaceName,omitempty" example:"eth0"`
-	Metric        int    `json:"metric,omitempty" example:"100"`
+	CidrBlocks               []string        `json:"cidrBlocks,omitempty"`
+	DefaultGatewayRouteRules []RouteProperty `json:"defaultGatewayRouteRules,omitempty"`
 }
