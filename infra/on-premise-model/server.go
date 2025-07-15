@@ -1,7 +1,8 @@
-package inframodel
+package onpremisemodel
 
 type ServerProperty struct {
 	Hostname      string                     `json:"hostname"`
+	MachineId     string                     `json:"machineId"` // Unique identifier for the server (e.g., UUID)
 	CPU           CpuProperty                `json:"cpu"`
 	Memory        MemoryProperty             `json:"memory"`
 	RootDisk      DiskProperty               `json:"rootDisk"`
