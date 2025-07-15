@@ -2,7 +2,7 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.10.8
+// * Version: CB-Tumblebug v0.10.10
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
@@ -116,6 +116,231 @@ type MciCmdReq struct {
 	Command  []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
 }
 
+// * Path: src/core/model/mci.go, Line: 118-163
+// TbMciInfo is struct for MCI info
+type TbMciInfo struct {
+	// ResourceType is the type of the resource
+	ResourceType string `json:"resourceType"`
+
+	// Id is unique identifier for the object
+	Id string `json:"id" example:"aws-ap-southeast-1"`
+	// Uid is universally unique identifier for the object, used for labelSelector
+	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
+
+	// Name is human-readable string to represent the object
+	Name string `json:"name" example:"aws-ap-southeast-1"`
+
+	Status       string          `json:"status"`
+	StatusCount  StatusCountInfo `json:"statusCount"`
+	TargetStatus string          `json:"targetStatus"`
+	TargetAction string          `json:"targetAction"`
+
+	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)
+	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
+
+	// ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)
+	ConfigureCloudAdaptiveNetwork string `json:"configureCloudAdaptiveNetwork" example:"yes" default:"no" enums:"yes,no"` // yes or no
+
+	// Label is for describing the object by keywords
+	Label map[string]string `json:"label"`
+
+	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
+	SystemLabel string `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
+
+	// Latest system message such as error message
+	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
+
+	PlacementAlgo string     `json:"placementAlgo,omitempty"`
+	Description   string     `json:"description"`
+	Vm            []TbVmInfo `json:"vm"`
+
+	// List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.
+	NewVmList []string `json:"newVmList"`
+
+	// PostCommand is for the command to bootstrap the VMs
+	PostCommand MciCmdReq `json:"postCommand"`
+
+	// PostCommandResult is the result of the command for bootstraping the VMs
+	PostCommandResult MciSshCmdResult `json:"postCommandResult"`
+}
+
+// * Path: src/core/model/mci.go, Line: 473-508
+// StatusCountInfo is struct to count the number of VMs in each status. ex: Running=4, Suspended=8.
+type StatusCountInfo struct {
+
+	// CountTotal is for Total VMs
+	CountTotal int `json:"countTotal"`
+
+	// CountCreating is for counting Creating
+	CountCreating int `json:"countCreating"`
+
+	// CountRunning is for counting Running
+	CountRunning int `json:"countRunning"`
+
+	// CountFailed is for counting Failed
+	CountFailed int `json:"countFailed"`
+
+	// CountSuspended is for counting Suspended
+	CountSuspended int `json:"countSuspended"`
+
+	// CountRebooting is for counting Rebooting
+	CountRebooting int `json:"countRebooting"`
+
+	// CountTerminated is for counting Terminated
+	CountTerminated int `json:"countTerminated"`
+
+	// CountSuspending is for counting Suspending
+	CountSuspending int `json:"countSuspending"`
+
+	// CountResuming is for counting Resuming
+	CountResuming int `json:"countResuming"`
+
+	// CountTerminating is for counting Terminating
+	CountTerminating int `json:"countTerminating"`
+
+	// CountUndefined is for counting Undefined
+	CountUndefined int `json:"countUndefined"`
+}
+
+// * Path: src/core/model/mci.go, Line: 465-436
+// TbVmInfo is struct to define a server instance object
+type TbVmInfo struct {
+	// ResourceType is the type of the resource
+	ResourceType string `json:"resourceType"`
+
+	// Id is unique identifier for the object
+	Id string `json:"id" example:"aws-ap-southeast-1"`
+	// Uid is universally unique identifier for the object, used for labelSelector
+	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
+	// CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.
+	CspResourceName string `json:"cspResourceName,omitempty" example:"we12fawefadf1221edcf"`
+	// CspResourceId is resource identifier managed by CSP
+	CspResourceId string `json:"cspResourceId,omitempty" example:"csp-06eb41e14121c550a"`
+
+	// Name is human-readable string to represent the object
+	Name string `json:"name" example:"aws-ap-southeast-1"`
+
+	// defined if the VM is in a group
+	SubGroupId string `json:"subGroupId"`
+
+	Location Location `json:"location"`
+
+	// Required by CB-Tumblebug
+	Status       string `json:"status"`
+	TargetStatus string `json:"targetStatus"`
+	TargetAction string `json:"targetAction"`
+
+	// Montoring agent status
+	MonAgentStatus string `json:"monAgentStatus" example:"[installed, notInstalled, failed]"` // yes or no// installed, notInstalled, failed
+
+	// NetworkAgent status
+	NetworkAgentStatus string `json:"networkAgentStatus" example:"[notInstalled, installing, installed, failed]"` // notInstalled, installing, installed, failed
+
+	// Latest system message such as error message
+	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
+
+	// Created time
+	CreatedTime string `json:"createdTime" example:"2022-11-10 23:00:00" default:""`
+
+	Label       map[string]string `json:"label"`
+	Description string            `json:"description"`
+
+	Region       RegionInfo `json:"region"` // AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
+	PublicIP     string     `json:"publicIP"`
+	SSHPort      string     `json:"sshPort"`
+	PublicDNS    string     `json:"publicDNS"`
+	PrivateIP    string     `json:"privateIP"`
+	PrivateDNS   string     `json:"privateDNS"`
+	RootDiskType string     `json:"rootDiskType"`
+	RootDiskSize string     `json:"rootDiskSize"`
+	RootDiskName string     `json:"rootDiskName"`
+
+	ConnectionName   string     `json:"connectionName"`
+	ConnectionConfig ConnConfig `json:"connectionConfig"`
+	SpecId           string     `json:"specId"`
+	CspSpecName      string     `json:"cspSpecName"`
+	ImageId          string     `json:"imageId"`
+	CspImageName     string     `json:"cspImageName"`
+	VNetId           string     `json:"vNetId"`
+	CspVNetId        string     `json:"cspVNetId"`
+	SubnetId         string     `json:"subnetId"`
+	CspSubnetId      string     `json:"cspSubnetId"`
+	NetworkInterface string     `json:"networkInterface"`
+	SecurityGroupIds []string   `json:"securityGroupIds"`
+	DataDiskIds      []string   `json:"dataDiskIds"`
+	SshKeyId         string     `json:"sshKeyId"`
+	CspSshKeyId      string     `json:"cspSshKeyId"`
+	VmUserName       string     `json:"vmUserName,omitempty"`
+	VmUserPassword   string     `json:"vmUserPassword,omitempty"`
+
+	AddtionalDetails []KeyValue `json:"addtionalDetails,omitempty"`
+}
+
+// * Path: src/core/model/mci.go, Line: 720-723
+// MciSshCmdResult is struct for Set of SshCmd Results in terms of MCI
+type MciSshCmdResult struct {
+	Results []SshCmdResult `json:"results"`
+}
+
+// * Path: src/core/model/mci.go, Line: 709-718
+// SshCmdResult is struct for SshCmd Result
+type SshCmdResult struct { // Tumblebug
+	MciId   string         `json:"mciId"`
+	VmId    string         `json:"vmId"`
+	VmIp    string         `json:"vmIp"`
+	Command map[int]string `json:"command"`
+	Stdout  map[int]string `json:"stdout"`
+	Stderr  map[int]string `json:"stderr"`
+	Err     error          `json:"err"`
+}
+
+// * Path: src/core/model/config.go, Line: 44-49
+// Location is structure for location information
+type Location struct {
+	Display   string  `mapstructure:"display" json:"display"`
+	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
+	Longitude float64 `mapstructure:"longitude" json:"longitude"`
+}
+
+// * Path: src/core/model/mci.go, Line: 83-87
+// RegionInfo is struct for region information
+type RegionInfo struct {
+	Region string
+	Zone   string
+}
+
+// * Path: src/core/model/common.go, Line: 169-181
+// ConnConfig is struct for containing modified CB-Spider struct for connection config
+type ConnConfig struct {
+	ConfigName           string         `json:"configName"`
+	ProviderName         string         `json:"providerName"`
+	DriverName           string         `json:"driverName"`
+	CredentialName       string         `json:"credentialName"`
+	CredentialHolder     string         `json:"credentialHolder"`
+	RegionZoneInfoName   string         `json:"regionZoneInfoName"`
+	RegionZoneInfo       RegionZoneInfo `json:"regionZoneInfo" gorm:"type:text;serializer:json"`
+	RegionDetail         RegionDetail   `json:"regionDetail" gorm:"type:text;serializer:json"`
+	RegionRepresentative bool           `json:"regionRepresentative"`
+	Verified             bool           `json:"verified"`
+}
+
+// * Path: src/core/model/common.go, Line: 242-246
+// RegionZoneInfo is struct for containing region struct
+type RegionZoneInfo struct {
+	AssignedRegion string `json:"assignedRegion"`
+	AssignedZone   string `json:"assignedZone"`
+}
+
+// * Path: src/core/model/config.go, Line: 30-37
+// RegionDetail is structure for region information
+type RegionDetail struct {
+	RegionId    string   `mapstructure:"id" json:"regionId"`
+	RegionName  string   `mapstructure:"regionName" json:"regionName"`
+	Description string   `mapstructure:"description" json:"description"`
+	Location    Location `mapstructure:"location" json:"location"`
+	Zones       []string `mapstructure:"zone" json:"zones"`
+}
+
 // * Path: src/core/model/vnet.go, Line: 17-26
 // TbVNetReq is a struct to handle 'Create vNet' request toward CB-Tumblebug.
 type TbVNetReq struct { // Tumblebug
@@ -156,7 +381,7 @@ type TbSshKeyReq struct {
 	PrivateKey       string `json:"privateKey"`
 }
 
-// * Path: src/core/model/spec.go, Line: 106-157
+// * Path: src/core/model/spec.go, Line: 118-169
 // TbSpecInfo is a struct that represents TB spec object.
 type TbSpecInfo struct { // Tumblebug
 	// Id is unique identifier for the object
