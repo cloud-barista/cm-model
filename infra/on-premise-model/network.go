@@ -1,4 +1,4 @@
-package inframodel
+package onpremisemodel
 
 // NetworkProerty represents a network for on-premise infrastructure.
 // In other perspective, it can be a network for servers and/or a collection of networks extracted from a host.//

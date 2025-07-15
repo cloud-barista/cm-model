@@ -1,4 +1,4 @@
-package inframodel
+package onpremisemodel
 
 type ServerProperty struct {
 	Hostname      string                     `json:"hostname"`
