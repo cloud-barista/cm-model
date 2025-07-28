@@ -480,14 +480,40 @@ type TbImageInfo struct {
 	Description string     `json:"description,omitempty"`
 }
 
-// * Path: src/core/model/image.go, Line: 23
+// * Path: src/core/model/image.go, Line: 23-36
 type OSArchitecture string
 
-// * Path: src/core/model/image.go, Line: 38
+const (
+	ARM32               OSArchitecture = "arm32"
+	ARM64               OSArchitecture = "arm64"
+	ARM64_MAC           OSArchitecture = "arm64_mac"
+	X86_32              OSArchitecture = "x86_32"
+	X86_64              OSArchitecture = "x86_64"
+	X86_32_MAC          OSArchitecture = "x86_32_mac"
+	X86_64_MAC          OSArchitecture = "x86_64_mac"
+	S390X               OSArchitecture = "s390x"
+	ArchitectureNA      OSArchitecture = "NA"
+	ArchitectureUnknown OSArchitecture = ""
+)
+
+// * Path: src/core/model/image.go, Line: 38-44
 type OSPlatform string
 
-// * Path: src/core/model/image.go, Line: 46
+const (
+	Linux_UNIX OSPlatform = "Linux/UNIX"
+	Windows    OSPlatform = "Windows"
+	PlatformNA OSPlatform = "NA"
+)
+
+// * Path: src/core/model/image.go, Line: 46-53
 type ImageStatus string
+
+const (
+	ImageAvailable   ImageStatus = "Available"
+	ImageUnavailable ImageStatus = "Unavailable"
+	ImageDeprecated  ImageStatus = "Deprecated"
+	ImageNA          ImageStatus = "NA"
+)
 
 // * Path: src/core/model/securitygroup.go, Line: 65-75
 // TbSecurityGroupReq is a struct to handle 'Create security group' request toward CB-Tumblebug.
