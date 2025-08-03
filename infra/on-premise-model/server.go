@@ -1,15 +1,16 @@
-package inframodel
+package onpremisemodel
 
 type ServerProperty struct {
-	Hostname      string                      `json:"hostname"`
-	CPU           CpuProperty                 `json:"cpu"`
-	Memory        MemoryProperty              `json:"memory"`
-	RootDisk      DiskProperty                `json:"rootDisk"`
-	DataDisks     []DiskProperty              `json:"dataDisks,omitempty"`
-	Interfaces    []NetworkInterfaceProperty  `json:"interfaces"`
-	RoutingTable  []RouteProperty             `json:"routingTable"`
-	FirewallRules []FirewallRuleProperty 	  `json:"firewallRules,omitempty"`
-	OS            OsProperty                  `json:"os"`
+	Hostname      string                     `json:"hostname"`
+	MachineId     string                     `json:"machineId"` // Unique identifier for the server (e.g., UUID)
+	CPU           CpuProperty                `json:"cpu"`
+	Memory        MemoryProperty             `json:"memory"`
+	RootDisk      DiskProperty               `json:"rootDisk"`
+	DataDisks     []DiskProperty             `json:"dataDisks,omitempty"`
+	Interfaces    []NetworkInterfaceProperty `json:"interfaces"`
+	RoutingTable  []RouteProperty            `json:"routingTable"`
+	FirewallTable []FirewallRuleProperty     `json:"firewallTable,omitempty"`
+	OS            OsProperty                 `json:"os"`
 }
 
 type CpuProperty struct {
@@ -59,14 +60,14 @@ type RouteProperty struct { // note: reference command `ip route`
 	LinkState   string `json:"linkState,omitempty"`   // Link state of the route (e.g., UP, DOWN)
 }
 
-type FirewallRuleProperty struct { // note: reference command `sudo ufw status verbose`
-	SrcCIDR   string `json:"srcCIDR,omitempty"`
-	DstCIDR   string `json:"dstCIDR,omitempty"`
-	SrcPorts  string `json:"srcPorts,omitempty"`
-	DstPorts  string `json:"dstPorts,omitempty"`
-	Protocol  string `json:"protocol,omitempty"`  // TCP, UDP, ICMP
-	Direction string `json:"direction,omitempty"` // inbound, outbound
-	Action    string `json:"action,omitempty"`    // allow, deny
+type FirewallRuleProperty struct { // note: reference command `iptables -v -t filter -S`
+	SrcCIDR   string `json:"srcCIDR,omitempty"`   // e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+	SrcPorts  string `json:"srcPorts,omitempty"`  // e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+	DstCIDR   string `json:"dstCIDR,omitempty"`   // e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+	DstPorts  string `json:"dstPorts,omitempty"`  // e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+	Protocol  string `json:"protocol,omitempty"`  // e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+	Direction string `json:"direction,omitempty"` // e.g., inbound, outbound
+	Action    string `json:"action,omitempty"`    // e.g., allow, deny
 }
 
 type OsProperty struct { // note: reference command `cat /etc/os-release`
