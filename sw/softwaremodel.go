@@ -135,7 +135,7 @@ type SourceConnectionInfoSoftwareProperty struct {
 
 type SourceGroupSoftwareProperty struct {
 	SourceGroupId      string                                 `json:"source_group_id" validate:"required"`
-	ConnectionInfoList []SourceConnectionInfoSoftwareProperty `json:"connection_info_list""`
+	ConnectionInfoList []SourceConnectionInfoSoftwareProperty `json:"connection_info_list"`
 }
 
 type BinaryMigrationInfo struct {
