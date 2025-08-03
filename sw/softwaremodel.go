@@ -104,6 +104,7 @@ type Package struct {
 type Container struct {
 	Name              string                       `json:"name,omitempty" validate:"required"`
 	Runtime           SoftwareContainerRuntimeType `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman)
+	ContainerId       string                       `json:"container_id" validate:"required"`
 	ContainerImage    ContainerImage               `json:"container_image,omitempty" validate:"required"`
 	ContainerPorts    []ContainerPort              `json:"container_ports"`
 	ContainerStatus   string                       `json:"container_status" validate:"required"`
@@ -165,6 +166,7 @@ type ContainerMigrationInfo struct {
 	Order             int             `json:"order"`
 	Name              string          `json:"name,omitempty" validate:"required"`
 	Runtime           string          `json:"runtime,omitempty" validate:"required"` // Which runtime uses for the container (Docker, Podman, ...)
+	ContainerId       string          `json:"container_id" validate:"required"`
 	ContainerImage    ContainerImage  `json:"container_image,omitempty" validate:"required"`
 	ContainerPorts    []ContainerPort `json:"container_ports"`
 	ContainerStatus   string          `json:"container_status" validate:"required"`
