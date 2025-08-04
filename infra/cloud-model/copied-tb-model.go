@@ -2,7 +2,7 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.10.10+ (includes Security Group firewall rule model refactor from PR #2063)
+// * Version: CB-Tumblebug v0.11.2 (includes Security Group firewall rule model refactor from PR #2063)
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
