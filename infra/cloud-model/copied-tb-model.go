@@ -2,7 +2,7 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.10.10
+// * Version: CB-Tumblebug v0.11.2 (includes Security Group firewall rule model refactor from PR #2063)
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
@@ -525,15 +525,19 @@ type TbSecurityGroupReq struct { // Tumblebug
 	FirewallRules  *[]TbFirewallRuleInfo `json:"firewallRules"` // validate:"required"`
 
 	// CspResourceId is required to register object from CSP (option=register)
-	CspResourceId string `json:"cspResourceId"`
+	CspResourceId string `json:"cspResourceId" example:"required for option=register only. ex: csp-06eb41e14121c550a"`
 }
 
 // * Path: src/core/model/securitygroup.go, Line: 77-84
 // TbFirewallRuleInfo is a struct to handle firewall rule info of CB-Tumblebug.
 type TbFirewallRuleInfo struct {
-	FromPort   string `validate:"required"` //`json:"fromPort"`
-	ToPort     string `validate:"required"` //`json:"toPort"`
-	IPProtocol string `validate:"required"` //`json:"ipProtocol"`
-	Direction  string `validate:"required"` //`json:"direction"`
-	CIDR       string
+	Ports     string `json:"Ports" example:"1-65535,22,5555"`
+	Protocol  string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP,ALL"`
+	Direction string `validate:"required" json:"Direction" example:"inbound" enums:"inbound,outbound"`
+	CIDR      string `json:"CIDR" example:"0.0.0.0/0"`
+}
+
+// TbSecurityGroupUpdateReq is a struct to handle 'Update security group' request toward CB-Tumblebug.
+type TbSecurityGroupUpdateReq struct {
+	FirewallRules []TbFirewallRuleInfo `json:"firewallRules"`
 }
