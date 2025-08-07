@@ -1,31 +1,52 @@
 # cm-model
 
-This repository is dedicated to managing source and target models for cloud migration. **It has been intended to improve and standardize these models across multiple projects.**
+This repository is dedicated to managing source and target models for cloud migration. It provides standardized Go structs and types for cloud migration scenarios.
 
-* Purpose: A common repository for improving and managing cloud migration models.
-* Status This repository is currently experimental.
-* Scope: This repository contains only models.
-* Separation: This repository is intentionally separated from Damselfly.
-  - Reason for separation: To avoid the impact of unrelated packages when importing model packages.
+## Project Overview
 
+**cm-model** is a common library for cloud migration models that:
 
-### Usage Instructions
-#### Import and use models
+- Provides standardized data models for cloud migration scenarios
+- Supports on-premise infrastructure, cloud infrastructure, and software models
+- Is designed to be imported as a dependency in other cloud migration projects
+- Avoids circular dependencies by keeping only model definitions
 
-To use the on-premise models from the cm-model repository:
+## Repository Structure
 
-Note - `onprem` alias could be applied according to your preference.
-```go
-import onprem "github.com/cloud-barista/cm-model/infra/onprem"
+```
+cm-model/
+├── infra/
+│   ├── cloud-model/          # Cloud infrastructure models
+│   └── on-premise-model/     # On-premise infrastructure models
+├── sw/                       # Software models
+├── data/                     # Data storage (for future use)
+└── go.mod
 ```
 
-#### Develop models locally and contribute it to the upstream
+## Model Categories
 
-To develop and test models locally, point to your local cm-model folder in go.mod:
+- **On-Premise Models**: Server specifications, network configuration, OS information
+- **Cloud Models**: Recommended cloud infrastructure configurations, CB-Tumblebug integration
+- **Software Models**: Software components, dependencies, and migration configurations
+
+## Usage Instructions
+
+### Import and use models
+
+```go
+import (
+    cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+    onpremisemodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+    softwaremodel "github.com/cloud-barista/cm-model/sw"
+)
+```
+
+### Local development for other subsystems
+
+To develop and test models locally, add this to your project's go.mod:
 
 ```go
 replace github.com/cloud-barista/cm-model => ../cm-model
 ```
 
-Once you've tested and improved the models locally, we encourage you to contribute your changes back to the cm-model upstream repository. 
-This helps improve the models for everyone and supports the ongoing development of cloud migration solutions.
+Once you've tested your changes, contribute them back to the upstream cm-model repository.
