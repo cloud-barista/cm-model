@@ -1,20 +1,9 @@
 package cloudmodel
 
-import (
-	"time"
-)
-
-// * Path: src/core/model/common.go, Line: 180-183
-// IID is struct from CB-Spider for resource identification
-type IID struct {
-	NameId   string `json:"NameId" validate:"required" example:"user-defined-name"`
-	SystemId string `json:"SystemId" validate:"required" example:"csp-defined-id"`
-}
-
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
 // * Version: CB-Tumblebug latest commit 684b2cb26e98bc04bde75a83f6b66ca3071e6cb7 (synchronized 2025-01-15)
-// * Includes enhanced functionality: Review APIs, MCI access management, auto-scaling features, and performance benchmarking
+// * Includes enhanced functionality: VM scaling, review APIs, access management, and status monitoring
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
@@ -72,7 +61,7 @@ type TbVmReq struct {
 }
 
 // * Path: src/core/model/mci.go, Line: 197-204
-// TbScaleOutSubGroupReq is struct to get requirements to create a new server instance
+// TbScaleOutSubGroupReq is struct to get requirements to scale out server instances
 type TbScaleOutSubGroupReq struct {
 	// Define addtional VMs to scaleOut
 	NumVMsToAdd string `json:"numVMsToAdd" validate:"required" example:"2"`
@@ -96,46 +85,10 @@ type TbMciDynamicReq struct {
 
 	Description string `json:"description" example:"Made in CB-TB"`
 
-	// Vm is array of VM requests for multi-cloud infrastructure
-	// Example: Multiple VM groups across different CSPs
-	// [
-	//   {
-	//     "name": "aws-group",
-	//     "subGroupSize": "3",
-	//     "commonSpec": "aws+ap-northeast-2+t3.nano",
-	//     "commonImage": "ami-01f71f215b23ba262",
-	//     "rootDiskSize": "50",
-	//     "label": {"role": "worker", "csp": "aws"}
-	//   },
-	//   {
-	//     "name": "azure-group",
-	//     "subGroupSize": "2",
-	//     "commonSpec": "azure+koreasouth+standard_b1s",
-	//     "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-	//     "rootDiskSize": "50",
-	//     "label": {"role": "head", "csp": "azure"}
-	//   },
-	//   {
-	//     "name": "gcp-group",
-	//     "subGroupSize": "1",
-	//     "commonSpec": "gcp+asia-northeast3+g1-small",
-	//     "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-	//     "rootDiskSize": "50",
-	//     "label": {"role": "test", "csp": "gcp"}
-	//   }
-	// ]
 	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
 
 	// PostCommand is for the command to bootstrap the VMs
 	PostCommand MciCmdReq `json:"postCommand"`
-}
-
-// * Path: src/core/model/mci.go, Line: 112-118
-// ResourceStatusInfo is struct for status information of a resource
-type ResourceStatusInfo struct {
-	Status       string `json:"status"`
-	TargetStatus string `json:"targetStatus"`
-	TargetAction string `json:"targetAction"`
 }
 
 // * Path: src/core/model/mci.go, Line: 225-250
@@ -164,233 +117,6 @@ type TbVmDynamicReq struct {
 	// if ConnectionName is given, the VM tries to use associtated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
 	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
-}
-
-// * Path: src/core/model/mci.go, Line: 281-286  
-// MciConnectionConfigCandidatesReq is struct for a request to check requirements to create a new MCI instance dynamically (with default resource option)
-type MciConnectionConfigCandidatesReq struct {
-	// CommonSpec is field for id of a spec in common namespace
-	CommonSpecs []string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t2.small,gcp+us-west1+g1-small"`
-}
-
-// * Path: src/core/model/mci.go, Line: 287-291
-// CheckMciDynamicReqInfo is struct to check requirements to create a new MCI instance dynamically (with default resource option)
-type CheckMciDynamicReqInfo struct {
-	ReqCheck []CheckVmDynamicReqInfo `json:"reqCheck" validate:"required"`
-}
-
-// * Path: src/core/model/mci.go, Line: 292-308
-// CheckVmDynamicReqInfo is struct to check requirements to create a new server instance dynamically (with default resource option)
-type CheckVmDynamicReqInfo struct {
-
-	// ConnectionConfigCandidates will provide ConnectionConfig options
-	ConnectionConfigCandidates []string `json:"connectionConfigCandidates" default:""`
-
-	//RootDiskSize string `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
-
-	Spec   TbSpecInfo    `json:"spec" default:""`
-	Image  []TbImageInfo `json:"image" default:""`
-	Region RegionDetail  `json:"region" default:""`
-
-	// Latest system message such as error message
-	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
-
-}
-
-// * Path: src/core/model/mci.go, Line: 309-330
-// ReviewMciDynamicReqInfo is struct for review result of MCI dynamic request
-type ReviewMciDynamicReqInfo struct {
-	// Overall assessment of the MCI request
-	OverallStatus  string `json:"overallStatus" example:"Ready/Warning/Error"`
-	OverallMessage string `json:"overallMessage" example:"All VMs can be created successfully"`
-	CreationViable bool   `json:"creationViable"`
-	EstimatedCost  string `json:"estimatedCost,omitempty" example:"$0.50/hour"`
-
-	// MCI-level information
-	MciName      string `json:"mciName"`
-	TotalVmCount int    `json:"totalVmCount"`
-
-	// VM-level validation results
-	VmReviews []ReviewVmDynamicReqInfo `json:"vmReviews"`
-
-	// Resource availability summary
-	ResourceSummary ReviewResourceSummary `json:"resourceSummary"`
-
-	// Recommendations for improvement
-	Recommendations []string `json:"recommendations,omitempty"`
-}
-
-// * Path: src/core/model/mci.go, Line: 331-361
-// ReviewVmDynamicReqInfo is struct for review result of individual VM in MCI dynamic request
-type ReviewVmDynamicReqInfo struct {
-	// VM request information
-	VmName       string `json:"vmName"`
-	SubGroupSize string `json:"subGroupSize"`
-
-	// Validation status
-	Status    string `json:"status" example:"Ready/Warning/Error"`
-	Message   string `json:"message" example:"VM can be created successfully"`
-	CanCreate bool   `json:"canCreate"`
-
-	// Resource validation details
-	SpecValidation  ReviewResourceValidation `json:"specValidation"`
-	ImageValidation ReviewResourceValidation `json:"imageValidation"`
-
-	// Connection and region info
-	ConnectionName string `json:"connectionName"`
-	ProviderName   string `json:"providerName"`
-	RegionName     string `json:"regionName"`
-
-	// Cost estimation
-	EstimatedCost string `json:"estimatedCost,omitempty" example:"$0.10/hour"`
-
-	// General information and configuration notes
-	Info []string `json:"info,omitempty"`
-
-	// Warnings and errors
-	Warnings []string `json:"warnings,omitempty"`
-	Errors   []string `json:"errors,omitempty"`
-}
-
-// * Path: src/core/model/mci.go, Line: 362-371
-// ReviewResourceValidation is struct for resource validation details
-type ReviewResourceValidation struct {
-	ResourceId    string `json:"resourceId"`
-	ResourceName  string `json:"resourceName,omitempty"`
-	IsAvailable   bool   `json:"isAvailable"`
-	Status        string `json:"status" example:"Available/Unavailable/Unknown"`
-	Message       string `json:"message,omitempty"`
-	CspResourceId string `json:"cspResourceId,omitempty"`
-}
-
-// * Path: src/core/model/mci.go, Line: 372-392
-// ReviewResourceSummary is struct for overall resource summary
-type ReviewResourceSummary struct {
-	TotalProviders  int      `json:"totalProviders"`
-	TotalRegions    int      `json:"totalRegions"`
-	UniqueSpecs     []string `json:"uniqueSpecs"`
-	UniqueImages    []string `json:"uniqueImages"`
-	ConnectionNames []string `json:"connectionNames"`
-
-	// Provider and region details
-	ProviderNames []string `json:"providerNames"`
-	RegionNames   []string `json:"regionNames"`
-
-	// Resource availability counts
-	AvailableSpecs    int `json:"availableSpecs"`
-	UnavailableSpecs  int `json:"unavailableSpecs"`
-	AvailableImages   int `json:"availableImages"`
-	UnavailableImages int `json:"unavailableImages"`
-}
-
-// * Path: src/core/model/mci.go, Line: 393-397
-// SpiderVMReqInfoWrapper is struct from CB-Spider (VMHandler.go) for wrapping SpiderVMReqInfo
-type SpiderVMReqInfoWrapper struct {
-	ConnectionName string
-	ReqInfo        SpiderVMReqInfo
-}
-
-// * Path: src/core/model/mci.go, Line: 398-406
-type SpiderImageType string
-
-const (
-	PublicImage SpiderImageType = "PublicImage"
-	MyImage     SpiderImageType = "MyImage"
-)
-
-// * Path: src/core/model/mci.go, Line: 407-428
-// Ref: cb-spider/cloud-control-manager/cloud-driver/interfaces/resources/VMHandler.go
-// SpiderVMReqInfo is struct from CB-Spider for VM request information
-type SpiderVMReqInfo struct {
-	// Fields for request
-	Name               string
-	ImageName          string
-	VPCName            string
-	SubnetName         string
-	SecurityGroupNames []string
-	KeyPairName        string
-	CSPid              string // VM ID given by CSP (required for registering VM)
-	DataDiskNames      []string
-
-	// Fields for both request and response
-	VMSpecName   string // instance type or flavour, etc... ex) t2.micro or f1.micro
-	VMUserId     string // ex) user1
-	VMUserPasswd string
-	RootDiskType string // "SSD(gp2)", "Premium SSD", ...
-	RootDiskSize string // "default", "50", "1000" (GB)
-	ImageType    SpiderImageType
-}
-
-// * Path: src/core/model/mci.go, Line: 429-459
-// Ref: cb-spider/cloud-control-manager/cloud-driver/interfaces/resources/VMHandler.go
-// SpiderVMInfo is struct from CB-Spider for VM information
-type SpiderVMInfo struct {
-
-	// Fields for both request and response
-	VMSpecName   string // instance type or flavour, etc... ex) t2.micro or f1.micro
-	VMUserId     string // ex) user1
-	VMUserPasswd string
-	RootDiskType string // "SSD(gp2)", "Premium SSD", ...
-	RootDiskSize string // "default", "50", "1000" (GB)
-	ImageType    SpiderImageType
-
-	// Fields for response
-	IId               IID // {NameId, SystemId}
-	ImageIId          IID
-	VpcIID            IID
-	SubnetIID         IID   // AWS, ex) subnet-8c4a53e4
-	SecurityGroupIIds []IID // AWS, ex) sg-0b7452563e1121bb6
-	KeyPairIId        IID
-	DataDiskIIDs      []IID
-	StartTime         time.Time
-	Region            RegionInfo //  ex) {us-east1, us-east1-c} or {ap-northeast-2}
-	NetworkInterface  string     // ex) eth0
-	PublicIP          string
-	PublicDNS         string
-	PrivateIP         string
-	PrivateDNS        string
-	RootDiskName      string // "/dev/sda1", ...
-	SSHAccessPoint    string
-	KeyValueList      []KeyValue
-}
-
-// * Path: src/core/model/mci.go, Line: 460-475 
-// TbSubGroupInfo is struct to define an object that includes homogeneous VMs
-type TbSubGroupInfo struct {
-	// ResourceType is the type of the resource
-	ResourceType string `json:"resourceType"`
-
-	// Id is unique identifier for the object
-	Id string `json:"id" example:"aws-ap-southeast-1"`
-	// Uid is universally unique identifier for the object, used for labelSelector
-	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
-	// Name is human-readable string to represent the object
-	Name string `json:"name" example:"aws-ap-southeast-1"`
-
-	VmId         []string `json:"vmId"`
-	SubGroupSize string   `json:"subGroupSize"`
-}
-
-// * Path: src/core/model/mci.go, Line: 476-495
-// MciAssociatedResourceList is struct for associated resource IDs of an MCI
-type MciAssociatedResourceList struct {
-	ConnectionNames []string `json:"connectionNames"`
-	ProviderNames   []string `json:"providerNames"`
-
-	SubGroupIds []string `json:"subGroupIds"`
-	VmIds       []string `json:"vmIds"`
-	CspVmNames  []string `json:"cspVmNames"`
-	CspVmIds    []string `json:"cspVmIds"`
-	ImageIds    []string `json:"imageIds"`
-	SpecIds     []string `json:"specIds"`
-
-	VNetIds          []string `json:"vNetIds"`
-	CspVNetIds       []string `json:"cspVNetIds"`
-	SubnetIds        []string `json:"subnetIds"`
-	CspSubnetIds     []string `json:"cspSubnetIds"`
-	SecurityGroupIds []string `json:"securityGroupIds"`
-	DataDiskIds      []string `json:"dataDiskIds"`
-	SSHKeyIds        []string `json:"sshKeyIds"`
 }
 
 // * Path: src/core/model/mci.go, Line: 703-707
@@ -560,208 +286,6 @@ type TbVmInfo struct {
 	AddtionalDetails []KeyValue `json:"addtionalDetails,omitempty"`
 }
 
-// * Path: src/core/model/mci.go, Line: 569-575
-// MciAccessInfo is struct to retrieve overall access information of a MCI
-type MciAccessInfo struct {
-	MciId                 string
-	MciNlbListener        *MciAccessInfo `json:"mciNlbListener,omitempty"`
-	MciSubGroupAccessInfo []MciSubGroupAccessInfo
-}
-
-// * Path: src/core/model/mci.go, Line: 576-583 
-// MciSubGroupAccessInfo is struct for MciSubGroupAccessInfo
-type MciSubGroupAccessInfo struct {
-	SubGroupId      string
-	NlbListener     interface{} `json:"nlbListener,omitempty"` // TbNLBListenerInfo - using interface{} to avoid circular dependency
-	BastionVmId     string
-	MciVmAccessInfo []MciVmAccessInfo
-}
-
-// * Path: src/core/model/mci.go, Line: 584-595
-// MciVmAccessInfo is struct for MciVmAccessInfo
-type MciVmAccessInfo struct {
-	VmId             string     `json:"vmId"`
-	PublicIP         string     `json:"publicIP"`
-	PrivateIP        string     `json:"privateIP"`
-	SSHPort          string     `json:"sshPort"`
-	PrivateKey       string     `json:"privateKey,omitempty"`
-	VmUserName       string     `json:"vmUserName,omitempty"`
-	VmUserPassword   string     `json:"vmUserPassword,omitempty"`
-	ConnectionConfig ConnConfig `json:"connectionConfig"`
-}
-
-// * Path: src/core/model/mci.go, Line: 596-603
-// TbIdNameInDetailInfo is struct for details related with ID and Name
-type TbIdNameInDetailInfo struct {
-	IdInTb    string `json:"idInTb"`
-	IdInSp    string `json:"idInSp"`
-	IdInCsp   string `json:"idInCsp"`
-	NameInCsp string `json:"nameInCsp"`
-}
-
-// * Path: src/core/model/mci.go, Line: 677-702
-// MciStatusInfo is struct to define simple information of MCI with updated status of all VMs
-type MciStatusInfo struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-
-	Status       string          `json:"status"`
-	StatusCount  StatusCountInfo `json:"statusCount"`
-	TargetStatus string          `json:"targetStatus"`
-	TargetAction string          `json:"targetAction"`
-
-	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
-	InstallMonAgent string `json:"installMonAgent" example:"[yes, no]"` // yes or no
-
-	MasterVmId    string `json:"masterVmId" example:"vm-asiaeast1-cb-01"`
-	MasterIp      string `json:"masterIp" example:"32.201.134.113"`
-	MasterSSHPort string `json:"masterSSHPort"`
-
-	// Label is for describing the object by keywords
-	Label map[string]string `json:"label"`
-
-	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
-	SystemLabel string `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
-
-	Vm []TbVmStatusInfo `json:"vm"`
-}
-
-// * Path: src/core/model/mci.go, Line: 703-709
-// ControlVmResult is struct for result of VM control
-type ControlVmResult struct {
-	VmId   string `json:"vmId"`
-	Status string `json:"Status"`
-	Error  error  `json:"Error"`
-}
-
-// * Path: src/core/model/mci.go, Line: 710-714
-// ControlVmResultWrapper is struct for array of results of VM control
-type ControlVmResultWrapper struct {
-	ResultArray []ControlVmResult `json:"resultarray"`
-}
-
-// * Path: src/core/model/mci.go, Line: 715-750
-// TbVmStatusInfo is to define simple information of VM with updated status
-type TbVmStatusInfo struct {
-
-	// Id is unique identifier for the object
-	Id string `json:"id" example:"aws-ap-southeast-1"`
-	// Uid is universally unique identifier for the object, used for labelSelector
-	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
-	// CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.
-	CspResourceName string `json:"cspResourceName,omitempty" example:"we12fawefadf1221edcf"`
-	// CspResourceId is resource identifier managed by CSP
-	CspResourceId string `json:"cspResourceId,omitempty" example:"csp-06eb41e14121c550a"`
-
-	// Name is human-readable string to represent the object
-	Name string `json:"name" example:"aws-ap-southeast-1"`
-
-	Status       string `json:"status"`
-	TargetStatus string `json:"targetStatus"`
-	TargetAction string `json:"targetAction"`
-	NativeStatus string `json:"nativeStatus"`
-
-	// Montoring agent status
-	MonAgentStatus string `json:"monAgentStatus" example:"[installed, notInstalled, failed]"` // yes or no// installed, notInstalled, failed
-
-	// Latest system message such as error message
-	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
-
-	// Created time
-	CreatedTime string `json:"createdTime" example:"2022-11-10 23:00:00" default:""`
-
-	PublicIp  string `json:"publicIp"`
-	PrivateIp string `json:"privateIp"`
-	SSHPort   string `json:"sshPort"`
-
-	Location Location `json:"location"`
-}
-
-// * Path: src/core/model/common.go, Line: 151-154 
-// KeyValue is struct for key-value pair
-type KeyValue struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-// * Path: src/core/model/common.go, Line: 235-244
-// ConnConfig is struct for containing modified CB-Spider struct for connection config
-type ConnConfig struct {
-	ConfigName           string         `json:"configName"`
-	ProviderName         string         `json:"providerName"`
-	DriverName           string         `json:"driverName"`
-	CredentialName       string         `json:"credentialName"`
-	CredentialHolder     string         `json:"credentialHolder"`
-	RegionZoneInfoName   string         `json:"regionZoneInfoName"`
-	RegionZoneInfo       RegionZoneInfo `json:"regionZoneInfo" gorm:"type:text;serializer:json"`
-	RegionDetail         RegionDetail   `json:"regionDetail" gorm:"type:text;serializer:json"`
-	RegionRepresentative bool           `json:"regionRepresentative"`
-	Verified             bool           `json:"verified"`
-}
-
-// * Path: src/core/model/common.go, Line: 278-281
-// RegionZoneInfo is struct for containing region struct  
-type RegionZoneInfo struct {
-	AssignedRegion string `json:"assignedRegion"`
-	AssignedZone   string `json:"assignedZone"`
-}
-
-// * Path: src/core/model/common.go (derived from other region structs)
-// RegionDetail is struct for region detail information
-type RegionDetail struct {
-	RegionName        string     `json:"regionName"`
-	ProviderName      string     `json:"providerName"`
-	KeyValueInfoList  []KeyValue `json:"keyValueInfoList"`
-	AvailableZoneList []string   `json:"availableZoneList"`
-}
-
-// Location is structure for location information
-type Location struct {
-	Display   string  `mapstructure:"display" json:"display"`
-	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
-	Longitude float64 `mapstructure:"longitude" json:"longitude"`
-}
-
-// * Path: src/core/model/vnet.go, Line: 19-28
-// TbVNetReq is a struct to handle 'Create vNet' request toward CB-Tumblebug.
-type TbVNetReq struct { // Tumblebug
-	Name           string        `json:"name" validate:"required" example:"vnet00"`
-	ConnectionName string        `json:"connectionName" validate:"required" example:"aws-ap-northeast-2"`
-	CidrBlock      string        `json:"cidrBlock" example:"10.0.0.0/16"`
-	SubnetInfoList []TbSubnetReq `json:"subnetInfoList"`
-	Description    string        `json:"description" example:"vnet00 managed by CB-Tumblebug"`
-	// todo: restore the tag list later
-	// TagList        []KeyValue    `json:"tagList,omitempty"`
-}
-
-// * Path: src/core/model/subnet.go, Line: 19-27  
-// TbSubnetReq is a struct that represents TB subnet request object.
-type TbSubnetReq struct { // Tumblebug
-	Name        string `json:"name" validate:"required" example:"subnet00"`
-	IPv4_CIDR   string `json:"ipv4_CIDR" validate:"required" example:"10.0.1.0/24"`
-	Zone        string `json:"zone,omitempty" default:""`
-	Description string `json:"description,omitempty" example:"subnet00 managed by CB-Tumblebug"`
-	// todo: restore the tag list later
-	// TagList     []KeyValue `json:"tagList,omitempty"`
-}
-
-// * Path: src/core/model/sshkey.go, Line: 28-40
-// TbSshKeyReq is a struct to handle 'Create SSH key' request toward CB-Tumblebug.
-type TbSshKeyReq struct {
-	Name           string `json:"name" validate:"required"`
-	ConnectionName string `json:"connectionName" validate:"required"`
-	Description    string `json:"description"`
-
-	// Fields for "Register existing SSH keys" feature
-	// CspResourceId is required to register object from CSP (option=register)
-	CspResourceId    string `json:"cspResourceId"`
-	Fingerprint      string `json:"fingerprint"`
-	Username         string `json:"username"`
-	VerifiedUsername string `json:"verifiedUsername"`
-	PublicKey        string `json:"publicKey"`
-	PrivateKey       string `json:"privateKey"`
-}
-
 // * Path: src/core/model/mci.go, Line: 720-723
 // MciSshCmdResult is struct for Set of SshCmd Results in terms of MCI
 type MciSshCmdResult struct {
@@ -778,6 +302,14 @@ type SshCmdResult struct { // Tumblebug
 	Stdout  map[int]string `json:"stdout"`
 	Stderr  map[int]string `json:"stderr"`
 	Err     error          `json:"err"`
+}
+
+// * Path: src/core/model/config.go, Line: 44-49
+// Location is structure for location information
+type Location struct {
+	Display   string  `mapstructure:"display" json:"display"`
+	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
+	Longitude float64 `mapstructure:"longitude" json:"longitude"`
 }
 
 // * Path: src/core/model/mci.go, Line: 83-87
@@ -1018,4 +550,75 @@ type TbFirewallRuleInfo struct {
 // TbSecurityGroupUpdateReq is a struct to handle 'Update security group' request toward CB-Tumblebug.
 type TbSecurityGroupUpdateReq struct {
 	FirewallRules []TbFirewallRuleInfo `json:"firewallRules"`
+}
+
+// * Path: src/core/model/mci.go, Line: 112-118 
+// ResourceStatusInfo is struct for status information of a resource
+type ResourceStatusInfo struct {
+	Status       string `json:"status"`
+	TargetStatus string `json:"targetStatus"`
+	TargetAction string `json:"targetAction"`
+}
+
+// * Path: src/core/model/mci.go, Line: 715-750
+// TbVmStatusInfo is to define simple information of VM with updated status
+type TbVmStatusInfo struct {
+	// Id is unique identifier for the object
+	Id string `json:"id" example:"aws-ap-southeast-1"`
+	// Uid is universally unique identifier for the object, used for labelSelector
+	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
+	// CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.
+	CspResourceName string `json:"cspResourceName,omitempty" example:"we12fawefadf1221edcf"`
+	// CspResourceId is resource identifier managed by CSP
+	CspResourceId string `json:"cspResourceId,omitempty" example:"csp-06eb41e14121c550a"`
+
+	// Name is human-readable string to represent the object
+	Name string `json:"name" example:"aws-ap-southeast-1"`
+
+	Status       string `json:"status"`
+	TargetStatus string `json:"targetStatus"`
+	TargetAction string `json:"targetAction"`
+	NativeStatus string `json:"nativeStatus"`
+
+	// Montoring agent status
+	MonAgentStatus string `json:"monAgentStatus" example:"[installed, notInstalled, failed]"` // yes or no// installed, notInstalled, failed
+
+	// Latest system message such as error message
+	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
+
+	// Created time
+	CreatedTime string `json:"createdTime" example:"2022-11-10 23:00:00" default:""`
+
+	PublicIp  string `json:"publicIp"`
+	PrivateIp string `json:"privateIp"`
+	SSHPort   string `json:"sshPort"`
+
+	Location Location `json:"location"`
+}
+
+// * Path: src/core/model/mci.go, Line: 677-702
+// MciStatusInfo is struct to define simple information of MCI with updated status of all VMs
+type MciStatusInfo struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+
+	Status       string          `json:"status"`
+	StatusCount  StatusCountInfo `json:"statusCount"`
+	TargetStatus string          `json:"targetStatus"`
+	TargetAction string          `json:"targetAction"`
+
+	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
+	InstallMonAgent string `json:"installMonAgent" example:"[yes, no]"` // yes or no
+
+	MasterVmId    string `json:"masterVmId" example:"vm-asiaeast1-cb-01"`
+	MasterIp      string `json:"masterIp" example:"32.201.134.113"`
+	MasterSSHPort string `json:"masterSSHPort"`
+
+	// Label is for describing the object by keywords
+	Label map[string]string `json:"label"`
+
+	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
+	SystemLabel string `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
+
+	Vm []TbVmStatusInfo `json:"vm"`
 }
