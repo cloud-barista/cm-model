@@ -2,7 +2,7 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.11.2 (includes Security Group firewall rule model refactor from PR #2063)
+// * Version: CB-Tumblebug latest main branch (commit: 684b2cb26e98bc04bde75a83f6b66ca3071e6cb7, Aug 6, 2025)
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
@@ -75,6 +75,34 @@ type TbMciDynamicReq struct {
 
 	Description string `json:"description" example:"Made in CB-TB"`
 
+	// Vm is array of VM requests for multi-cloud infrastructure
+	// Example: Multiple VM groups across different CSPs
+	// [
+	//   {
+	//     "name": "aws-group",
+	//     "subGroupSize": "3",
+	//     "commonSpec": "aws+ap-northeast-2+t3.nano",
+	//     "commonImage": "ami-01f71f215b23ba262",
+	//     "rootDiskSize": "50",
+	//     "label": {"role": "worker", "csp": "aws"}
+	//   },
+	//   {
+	//     "name": "azure-group",
+	//     "subGroupSize": "2",
+	//     "commonSpec": "azure+koreasouth+standard_b1s",
+	//     "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+	//     "rootDiskSize": "50",
+	//     "label": {"role": "head", "csp": "azure"}
+	//   },
+	//   {
+	//     "name": "gcp-group",
+	//     "subGroupSize": "1",
+	//     "commonSpec": "gcp+asia-northeast3+g1-small",
+	//     "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+	//     "rootDiskSize": "50",
+	//     "label": {"role": "test", "csp": "gcp"}
+	//   }
+	// ]
 	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
 
 	// PostCommand is for the command to bootstrap the VMs
@@ -91,22 +119,22 @@ type TbVmDynamicReq struct {
 	SubGroupSize string `json:"subGroupSize" example:"3" default:"1"`
 
 	// Label is for describing the object by keywords
-	Label map[string]string `json:"label"`
+	Label map[string]string `json:"label" example:"{\"role\":\"worker\",\"env\":\"test\"}"`
 
-	Description string `json:"description" example:"Description"`
+	Description string `json:"description" example:"Created via CB-Tumblebug"`
 
 	// CommonSpec is field for id of a spec in common namespace
-	CommonSpec string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t2.small"`
+	CommonSpec string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t3.nano"`
 	// CommonImage is field for id of a image in common namespace
-	CommonImage string `json:"commonImage" validate:"required" example:"ubuntu18.04"`
+	CommonImage string `json:"commonImage" validate:"required" example:"ami-01f71f215b23ba262"`
 
-	RootDiskType string `json:"rootDiskType,omitempty" example:"default, TYPE1, ..." default:"default"`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize string `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..." default:"default"` // "default", Integer (GB): ["50", ..., "1000"]
+	RootDiskType string `json:"rootDiskType,omitempty" example:"gp3" default:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
+	RootDiskSize string `json:"rootDiskSize,omitempty" example:"50" default:"default"`  // "default", Integer (GB): ["50", ..., "1000"]
 
-	VmUserPassword string `json:"vmUserPassword,omitempty" default:""`
+	VmUserPassword string `json:"vmUserPassword,omitempty" example:"" default:""`
 	// if ConnectionName is given, the VM tries to use associtated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
-	ConnectionName string `json:"connectionName,omitempty" default:""`
+	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
 }
 
 // * Path: src/core/model/mci.go, Line: 703-707
@@ -114,6 +142,140 @@ type TbVmDynamicReq struct {
 type MciCmdReq struct {
 	UserName string   `json:"userName" example:"cb-user" default:""`
 	Command  []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
+}
+
+// TbVmReq is struct to get requirements to create a new server instance
+type TbScaleOutSubGroupReq struct {
+	// Define addtional VMs to scaleOut
+	NumVMsToAdd string `json:"numVMsToAdd" validate:"required" example:"2"`
+
+	//tobe added accoring to new future capability
+}
+
+// MciConnectionConfigCandidatesReq is struct for a request to check requirements to create a new MCI instance dynamically (with default resource option)
+type MciConnectionConfigCandidatesReq struct {
+	// CommonSpec is field for id of a spec in common namespace
+	CommonSpecs []string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t2.small,gcp+us-west1+g1-small"`
+}
+
+// CheckMciDynamicReqInfo is struct to check requirements to create a new MCI instance dynamically (with default resource option)
+type CheckMciDynamicReqInfo struct {
+	ReqCheck []CheckVmDynamicReqInfo `json:"reqCheck" validate:"required"`
+}
+
+// CheckVmDynamicReqInfo is struct to check requirements to create a new server instance dynamically (with default resource option)
+type CheckVmDynamicReqInfo struct {
+
+	// ConnectionConfigCandidates will provide ConnectionConfig options
+	ConnectionConfigCandidates []string `json:"connectionConfigCandidates" default:""`
+
+	//RootDiskSize string `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
+
+	Spec   TbSpecInfo    `json:"spec" default:""`
+	Image  []TbImageInfo `json:"image" default:""`
+	Region RegionDetail  `json:"region" default:""`
+
+	// Latest system message such as error message
+	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
+
+}
+
+// ReviewMciDynamicReqInfo is struct for review result of MCI dynamic request
+type ReviewMciDynamicReqInfo struct {
+	// Overall assessment of the MCI request
+	OverallStatus  string `json:"overallStatus" example:"Ready/Warning/Error"`
+	OverallMessage string `json:"overallMessage" example:"All VMs can be created successfully"`
+	CreationViable bool   `json:"creationViable"`
+	EstimatedCost  string `json:"estimatedCost,omitempty" example:"$0.50/hour"`
+
+	// MCI-level information
+	MciName      string `json:"mciName"`
+	TotalVmCount int    `json:"totalVmCount"`
+
+	// VM-level validation results
+	VmReviews []ReviewVmDynamicReqInfo `json:"vmReviews"`
+
+	// Resource availability summary
+	ResourceSummary ReviewResourceSummary `json:"resourceSummary"`
+
+	// Recommendations for improvement
+	Recommendations []string `json:"recommendations,omitempty"`
+}
+
+// ReviewVmDynamicReqInfo is struct for review result of individual VM in MCI dynamic request
+type ReviewVmDynamicReqInfo struct {
+	// VM request information
+	VmName       string `json:"vmName"`
+	SubGroupSize string `json:"subGroupSize"`
+
+	// Validation status
+	Status    string `json:"status" example:"Ready/Warning/Error"`
+	Message   string `json:"message" example:"VM can be created successfully"`
+	CanCreate bool   `json:"canCreate"`
+
+	// Resource validation details
+	SpecValidation  ReviewResourceValidation `json:"specValidation"`
+	ImageValidation ReviewResourceValidation `json:"imageValidation"`
+
+	// Connection and region info
+	ConnectionName string `json:"connectionName"`
+	ProviderName   string `json:"providerName"`
+	RegionName     string `json:"regionName"`
+
+	// Cost estimation
+	EstimatedCost string `json:"estimatedCost,omitempty" example:"$0.10/hour"`
+
+	// General information and configuration notes
+	Info []string `json:"info,omitempty"`
+
+	// Warnings and errors
+	Warnings []string `json:"warnings,omitempty"`
+	Errors   []string `json:"errors,omitempty"`
+}
+
+// ReviewResourceValidation is struct for resource validation details
+type ReviewResourceValidation struct {
+	ResourceId    string `json:"resourceId"`
+	ResourceName  string `json:"resourceName,omitempty"`
+	IsAvailable   bool   `json:"isAvailable"`
+	Status        string `json:"status" example:"Available/Unavailable/Unknown"`
+	Message       string `json:"message,omitempty"`
+	CspResourceId string `json:"cspResourceId,omitempty"`
+}
+
+// ReviewResourceSummary is struct for overall resource summary
+type ReviewResourceSummary struct {
+	TotalProviders  int      `json:"totalProviders"`
+	TotalRegions    int      `json:"totalRegions"`
+	UniqueSpecs     []string `json:"uniqueSpecs"`
+	UniqueImages    []string `json:"uniqueImages"`
+	ConnectionNames []string `json:"connectionNames"`
+
+	// Provider and region details
+	ProviderNames []string `json:"providerNames"`
+	RegionNames   []string `json:"regionNames"`
+
+	// Resource availability counts
+	AvailableSpecs    int `json:"availableSpecs"`
+	UnavailableSpecs  int `json:"unavailableSpecs"`
+	AvailableImages   int `json:"availableImages"`
+	UnavailableImages int `json:"unavailableImages"`
+}
+
+// TbSubGroupInfo is struct to define an object that includes homogeneous VMs
+type TbSubGroupInfo struct {
+	// ResourceType is the type of the resource
+	ResourceType string `json:"resourceType"`
+
+	// Id is unique identifier for the object
+	Id string `json:"id" example:"aws-ap-southeast-1"`
+	// Uid is universally unique identifier for the object, used for labelSelector
+	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
+	// Name is human-readable string to represent the object
+	Name string `json:"name" example:"aws-ap-southeast-1"`
+
+	VmId         []string `json:"vmId"`
+	SubGroupSize string   `json:"subGroupSize"`
 }
 
 // * Path: src/core/model/mci.go, Line: 118-163
@@ -520,24 +682,43 @@ const (
 type TbSecurityGroupReq struct { // Tumblebug
 	Name           string                `json:"name" validate:"required"`
 	ConnectionName string                `json:"connectionName" validate:"required"`
-	VNetId         string                `json:"vNetId" validate:"required"`
-	Description    string                `json:"description"`
-	FirewallRules  *[]TbFirewallRuleInfo `json:"firewallRules"` // validate:"required"`
+	VNetId         string               `json:"vNetId" validate:"required"`
+	Description    string               `json:"description"`
+	FirewallRules  *[]TbFirewallRuleReq `json:"firewallRules"` // validate:"required"`
 
 	// CspResourceId is required to register object from CSP (option=register)
 	CspResourceId string `json:"cspResourceId" example:"required for option=register only. ex: csp-06eb41e14121c550a"`
 }
 
+// TbFirewallRuleReq is a struct to get a request for firewall rule info of CB-Tumblebug.
+type TbFirewallRuleReq struct {
+	// Ports is to get multiple ports or port ranges as a string (e.g. "22,900-1000,2000-3000")
+	// This allows flexibility in specifying single ports or ranges in a comma-separated format.
+	// This field is used to handle both single ports and port ranges in a unified way.
+	// It can accept a single port (e.g. "22"), a range (e.g. "900-1000"), or multiple ports/ranges (e.g. "22,900-1000,2000-3000").
+	Ports string `json:"Ports" example:"22,900-1000,2000-3000"`
+	// Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.
+	Protocol string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP"`
+	// Direction is the direction of the rule (inbound or outbound)
+	Direction string `validate:"required" json:"Direction" example:"inbound" enums:"inbound,outbound"`
+	// CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+	CIDR string `json:"CIDR" example:"0.0.0.0/0"`
+}
+
 // * Path: src/core/model/securitygroup.go, Line: 77-84
 // TbFirewallRuleInfo is a struct to handle firewall rule info of CB-Tumblebug.
 type TbFirewallRuleInfo struct {
-	Ports     string `json:"Ports" example:"1-65535,22,5555"`
-	Protocol  string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP,ALL"`
+	// Port is the single port (e.g. "22") or port range (e.g. "1-65535") for the rule
+	Port string `json:"Port" example:"1-65535"`
+	// Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)
+	Protocol string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP,ALL"`
+	// Direction is the direction of the rule (inbound or outbound)
 	Direction string `validate:"required" json:"Direction" example:"inbound" enums:"inbound,outbound"`
-	CIDR      string `json:"CIDR" example:"0.0.0.0/0"`
+	// CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+	CIDR string `json:"CIDR" example:"0.0.0.0/0"`
 }
 
 // TbSecurityGroupUpdateReq is a struct to handle 'Update security group' request toward CB-Tumblebug.
 type TbSecurityGroupUpdateReq struct {
-	FirewallRules []TbFirewallRuleInfo `json:"firewallRules"`
+	FirewallRules []TbFirewallRuleReq `json:"firewallRules"`
 }
