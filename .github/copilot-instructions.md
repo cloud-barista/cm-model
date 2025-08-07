@@ -117,8 +117,8 @@ cm-model/
 ### 4. CB-Tumblebug Integration
 
 - **Version Management**: TB-prefixed models in `copied-tb-model.go` are maintained to match specific CB-Tumblebug versions
-- **Current Version**: Check the version comment at the top of `copied-tb-model.go` for the current synchronized CB-Tumblebug version
-- **Maintainer-Driven Updates**: Only maintainers can initiate updates to specific CB-Tumblebug versions (e.g., v0.10.3, latest)
+- **Current Version**: Check the version comment at the top of `copied-tb-model.go` for the current synchronized CB-Tumblebug version (currently v0.11.2)
+- **Maintainer-Driven Updates**: Only maintainers can initiate updates to specific CB-Tumblebug versions (e.g., v0.10.3, v0.11.2, v0.12.0, latest)
 - **Update Process**: When updating, compare with the target TB version to identify:
   - Changed struct fields and their types
   - New struct definitions
@@ -130,6 +130,14 @@ cm-model/
   - Preserve all existing struct documentation and validation tags
   - Ensure backward compatibility where possible
 - **Dependency Avoidance**: Models are copied (not imported) to prevent circular dependencies with CB-Tumblebug
+
+#### SyncTB Process Guidelines
+
+- **Automated Synchronization**: Use SyncTB prompt file (`.github/prompts/sync-tb.prompt.md`) for TB model updates
+- **Version-Specific Updates**: Always specify target TB version when running SyncTB
+- **Change Validation**: Review all struct changes for backward compatibility before applying
+- **Documentation Preservation**: Maintain all existing field comments and validation patterns
+- **Testing Requirements**: Verify model serialization and ensure no compilation errors after sync
 
 ### 5. Field Documentation Standards
 
@@ -203,6 +211,80 @@ type PackageMigrationInfo struct {
     NeededPackages           []string `json:"needed_packages" validate:"required"`
     RepoURL                  string   `json:"repo_url"`
     PackageMigrationConfigID string   `json:"package_migration_config_id"`
+}
+```
+
+### CB-Tumblebug Model Patterns
+
+```go
+// MCI (Multi Cloud Infrastructure) Request Pattern
+type TbMciReq struct {
+    Name            string            `json:"name" validate:"required" example:"mci01"`
+    InstallMonAgent string            `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"`
+    Label           map[string]string `json:"label"`
+    SystemLabel     string            `json:"systemLabel" example:"" default:""`
+    PlacementAlgo   string            `json:"placementAlgo,omitempty"`
+    Description     string            `json:"description" example:"Made in CB-TB"`
+    Vm              []TbVmReq         `json:"vm" validate:"required"`
+    PostCommand     MciCmdReq         `json:"postCommand" validate:"omitempty"`
+}
+```
+
+```go
+// VM Request Pattern with CSP Resource Management
+type TbVmReq struct {
+    Name             string   `json:"name" validate:"required" example:"g1-1"`
+    CspResourceId    string   `json:"cspResourceId,omitempty" example:"i-014fa6ede6ada0b2c"`
+    SubGroupSize     string   `json:"subGroupSize" example:"3" default:""`
+    Label            map[string]string `json:"label"`
+    Description      string   `json:"description" example:"Description"`
+    ConnectionName   string   `json:"connectionName" validate:"required" example:"testcloud01-seoul"`
+    SpecId           string   `json:"specId" validate:"required"`
+    ImageId          string   `json:"imageId" validate:"required"`
+    VNetId           string   `json:"vNetId" validate:"required"`
+    SubnetId         string   `json:"subnetId" validate:"required"`
+    SecurityGroupIds []string `json:"securityGroupIds" validate:"required"`
+    SshKeyId         string   `json:"sshKeyId" validate:"required"`
+    VmUserName       string   `json:"vmUserName,omitempty"`
+    VmUserPassword   string   `json:"vmUserPassword,omitempty"`
+    RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`
+    RootDiskSize     string   `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."`
+    DataDiskIds      []string `json:"dataDiskIds"`
+}
+```
+
+```go
+// Dynamic Resource Pattern with Common Specs
+type TbVmDynamicReq struct {
+    Name             string            `json:"name" example:"g1-1"`
+    SubGroupSize     string            `json:"subGroupSize" example:"3" default:"1"`
+    Label            map[string]string `json:"label"`
+    Description      string            `json:"description" example:"Description"`
+    CommonSpec       string            `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t2.small"`
+    CommonImage      string            `json:"commonImage" validate:"required" example:"ubuntu18.04"`
+    RootDiskType     string            `json:"rootDiskType,omitempty" example:"default, TYPE1, ..." default:"default"`
+    RootDiskSize     string            `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..." default:"default"`
+    VmUserPassword   string            `json:"vmUserPassword,omitempty" default:""`
+    ConnectionName   string            `json:"connectionName,omitempty" default:""`
+}
+```
+
+```go
+// Network Security Pattern with Firewall Rules
+type TbSecurityGroupReq struct {
+    Name           string                `json:"name" validate:"required"`
+    ConnectionName string                `json:"connectionName" validate:"required"`
+    VNetId         string                `json:"vNetId" validate:"required"`
+    Description    string                `json:"description"`
+    FirewallRules  *[]TbFirewallRuleInfo `json:"firewallRules"`
+    CspResourceId  string                `json:"cspResourceId" example:"required for option=register only"`
+}
+
+type TbFirewallRuleInfo struct {
+    Ports     string `json:"Ports" example:"1-65535,22,5555"`
+    Protocol  string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP,ALL"`
+    Direction string `validate:"required" json:"Direction" example:"inbound" enums:"inbound,outbound"`
+    CIDR      string `json:"CIDR" example:"0.0.0.0/0"`
 }
 ```
 
@@ -296,28 +378,50 @@ The repository includes automated workflows:
 - **Auto-merge**: Automatic merging based on maintainer approval
 - Team-based access control through `cloud-barista` organization
 
-### Using GitHub Copilot in Issues
+### Using SyncTB for CB-Tumblebug Model Synchronization
 
-For complex model design or major refactoring tasks, you can leverage GitHub Copilot:
+The SyncTB tool provides automated CB-Tumblebug model synchronization through VS Code's prompt file system.
 
-**When to use Copilot in Issues**:
+**How to Use SyncTB**:
 
-- Designing new model categories with multiple related structs
-- Large-scale TB model synchronization with breaking changes
-- Cross-package model integration requirements
-- Performance optimization for large model structures
+1. **Via Chat Command**:
 
-**Example Copilot prompt in Issues**:
+   - Open VS Code Chat (Ctrl+Shift+I or Cmd+Shift+I)
+   - Type `/sync-tb` in the chat input
+   - Specify the target TB version when prompted (e.g., `v0.11.2`, `v0.12.0`, `latest`)
 
-```markdown
-@github-copilot please help design complete model structures for [specific use case]
-following cm-model patterns:
+2. **Via Command Palette**:
 
-- JSON serialization with proper tags
-- Validation tags for required fields
-- Comprehensive field documentation
-- Backward compatibility considerations
+   - Open Command Palette (Ctrl+Shift+P or Cmd+Shift+P)
+   - Run "Chat: Run Prompt"
+   - Select "sync-tb" from the list
+   - Enter the target CB-Tumblebug version
+
+3. **Direct Execution**:
+   - Open `.github/prompts/sync-tb.prompt.md`
+   - Click the play button in the editor title
+   - Choose to run in current or new chat session
+
+**Example Usage**:
+
 ```
+/sync-tb
+Target Version: v0.12.0
+```
+
+**SyncTB Process**:
+
+- **Automated Analysis**: Compares current models with target TB version
+- **Change Detection**: Identifies struct modifications, additions, and removals
+- **Documentation Sync**: Updates version headers and source path comments
+- **Validation**: Ensures backward compatibility and proper serialization
+- **Quality Assurance**: Runs comprehensive validation checks
+
+**Prerequisites**:
+
+- Maintainer access to cm-model repository
+- VS Code with GitHub Copilot enabled
+- Access to target CB-Tumblebug version source code
 
 ## Related Projects
 
