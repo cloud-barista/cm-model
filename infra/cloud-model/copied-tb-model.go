@@ -3,7 +3,7 @@ package cloudmodel
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
 // * Version: CB-Tumblebug latest commit 684b2cb26e98bc04bde75a83f6b66ca3071e6cb7 (synchronized 2025-01-15)
-// * Includes enhanced functionality: VM scaling, review APIs, access management, and status monitoring
+// * Synchronized only structs related to cm-model dependencies with enhanced functionality
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
@@ -58,15 +58,6 @@ type TbVmReq struct {
 	RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 	RootDiskSize     string   `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
 	DataDiskIds      []string `json:"dataDiskIds"`
-}
-
-// * Path: src/core/model/mci.go, Line: 197-204
-// TbScaleOutSubGroupReq is struct to get requirements to scale out server instances
-type TbScaleOutSubGroupReq struct {
-	// Define addtional VMs to scaleOut
-	NumVMsToAdd string `json:"numVMsToAdd" validate:"required" example:"2"`
-
-	//tobe added accoring to new future capability
 }
 
 // * Path: src/core/model/mci.go, Line: 204-223
@@ -550,75 +541,4 @@ type TbFirewallRuleInfo struct {
 // TbSecurityGroupUpdateReq is a struct to handle 'Update security group' request toward CB-Tumblebug.
 type TbSecurityGroupUpdateReq struct {
 	FirewallRules []TbFirewallRuleInfo `json:"firewallRules"`
-}
-
-// * Path: src/core/model/mci.go, Line: 112-118 
-// ResourceStatusInfo is struct for status information of a resource
-type ResourceStatusInfo struct {
-	Status       string `json:"status"`
-	TargetStatus string `json:"targetStatus"`
-	TargetAction string `json:"targetAction"`
-}
-
-// * Path: src/core/model/mci.go, Line: 715-750
-// TbVmStatusInfo is to define simple information of VM with updated status
-type TbVmStatusInfo struct {
-	// Id is unique identifier for the object
-	Id string `json:"id" example:"aws-ap-southeast-1"`
-	// Uid is universally unique identifier for the object, used for labelSelector
-	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
-	// CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.
-	CspResourceName string `json:"cspResourceName,omitempty" example:"we12fawefadf1221edcf"`
-	// CspResourceId is resource identifier managed by CSP
-	CspResourceId string `json:"cspResourceId,omitempty" example:"csp-06eb41e14121c550a"`
-
-	// Name is human-readable string to represent the object
-	Name string `json:"name" example:"aws-ap-southeast-1"`
-
-	Status       string `json:"status"`
-	TargetStatus string `json:"targetStatus"`
-	TargetAction string `json:"targetAction"`
-	NativeStatus string `json:"nativeStatus"`
-
-	// Montoring agent status
-	MonAgentStatus string `json:"monAgentStatus" example:"[installed, notInstalled, failed]"` // yes or no// installed, notInstalled, failed
-
-	// Latest system message such as error message
-	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
-
-	// Created time
-	CreatedTime string `json:"createdTime" example:"2022-11-10 23:00:00" default:""`
-
-	PublicIp  string `json:"publicIp"`
-	PrivateIp string `json:"privateIp"`
-	SSHPort   string `json:"sshPort"`
-
-	Location Location `json:"location"`
-}
-
-// * Path: src/core/model/mci.go, Line: 677-702
-// MciStatusInfo is struct to define simple information of MCI with updated status of all VMs
-type MciStatusInfo struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-
-	Status       string          `json:"status"`
-	StatusCount  StatusCountInfo `json:"statusCount"`
-	TargetStatus string          `json:"targetStatus"`
-	TargetAction string          `json:"targetAction"`
-
-	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
-	InstallMonAgent string `json:"installMonAgent" example:"[yes, no]"` // yes or no
-
-	MasterVmId    string `json:"masterVmId" example:"vm-asiaeast1-cb-01"`
-	MasterIp      string `json:"masterIp" example:"32.201.134.113"`
-	MasterSSHPort string `json:"masterSSHPort"`
-
-	// Label is for describing the object by keywords
-	Label map[string]string `json:"label"`
-
-	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
-	SystemLabel string `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
-
-	Vm []TbVmStatusInfo `json:"vm"`
 }
