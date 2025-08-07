@@ -41,12 +41,6 @@ Synchronize CB-Tumblebug model definitions in `copied-tb-model.go` with enhanced
 - Network agent monitoring capabilities
 - VM lifecycle management improvements
 
-### ❌ **DO NOT Include**
-- Independent scaling operations (`TbScaleOutSubGroupReq`)
-- Generic status tracking structs (`ResourceStatusInfo`)  
-- VM status monitoring structs (`TbVmStatusInfo`)
-- MCI status overview structs (`MciStatusInfo`)
-- Specialized monitoring functionality unrelated to cm-model
 
 ## Validation Checklist
 
