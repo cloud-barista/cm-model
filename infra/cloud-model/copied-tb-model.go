@@ -2,8 +2,7 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug latest commit 684b2cb26e98bc04bde75a83f6b66ca3071e6cb7 (synchronized 2025-01-15)
-// * Synchronized only structs related to cm-model dependencies with enhanced functionality
+// * Version: CB-Tumblebug v0.11.2 (includes Security Group firewall rule model refactor from PR #2063)
 
 // * Path: src/core/model/mci.go, Line: 89-109
 // TbMciReq is struct for requirements to create MCI
@@ -76,34 +75,6 @@ type TbMciDynamicReq struct {
 
 	Description string `json:"description" example:"Made in CB-TB"`
 
-	// Vm is array of VM requests for multi-cloud infrastructure
-	// Example: Multiple VM groups across different CSPs
-	// [
-	//   {
-	//     "name": "aws-group",
-	//     "subGroupSize": "3",
-	//     "commonSpec": "aws+ap-northeast-2+t3.nano",
-	//     "commonImage": "ami-01f71f215b23ba262",
-	//     "rootDiskSize": "50",
-	//     "label": {"role": "worker", "csp": "aws"}
-	//   },
-	//   {
-	//     "name": "azure-group",
-	//     "subGroupSize": "2",
-	//     "commonSpec": "azure+koreasouth+standard_b1s",
-	//     "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-	//     "rootDiskSize": "50",
-	//     "label": {"role": "head", "csp": "azure"}
-	//   },
-	//   {
-	//     "name": "gcp-group",
-	//     "subGroupSize": "1",
-	//     "commonSpec": "gcp+asia-northeast3+g1-small",
-	//     "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-	//     "rootDiskSize": "50",
-	//     "label": {"role": "test", "csp": "gcp"}
-	//   }
-	// ]
 	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
 
 	// PostCommand is for the command to bootstrap the VMs
@@ -114,28 +85,28 @@ type TbMciDynamicReq struct {
 // TbVmDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
 type TbVmDynamicReq struct {
 	// VM name or subGroup name if is (not empty) && (> 0). If it is a group, actual VM name will be generated with -N postfix.
-	Name string `json:"name" example:"g1"`
+	Name string `json:"name" example:"g1-1"`
 
 	// if subGroupSize is (not empty) && (> 0), subGroup will be generated. VMs will be created accordingly.
 	SubGroupSize string `json:"subGroupSize" example:"3" default:"1"`
 
 	// Label is for describing the object by keywords
-	Label map[string]string `json:"label" example:"{\"role\":\"worker\",\"env\":\"test\"}"`
+	Label map[string]string `json:"label"`
 
-	Description string `json:"description" example:"Created via CB-Tumblebug"`
+	Description string `json:"description" example:"Description"`
 
 	// CommonSpec is field for id of a spec in common namespace
-	CommonSpec string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t3.nano"`
+	CommonSpec string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t2.small"`
 	// CommonImage is field for id of a image in common namespace
-	CommonImage string `json:"commonImage" validate:"required" example:"ami-01f71f215b23ba262"`
+	CommonImage string `json:"commonImage" validate:"required" example:"ubuntu18.04"`
 
-	RootDiskType string `json:"rootDiskType,omitempty" example:"gp3" default:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize string `json:"rootDiskSize,omitempty" example:"50" default:"default"`  // "default", Integer (GB): ["50", ..., "1000"]
+	RootDiskType string `json:"rootDiskType,omitempty" example:"default, TYPE1, ..." default:"default"`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
+	RootDiskSize string `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..." default:"default"` // "default", Integer (GB): ["50", ..., "1000"]
 
-	VmUserPassword string `json:"vmUserPassword,omitempty" example:"" default:""`
+	VmUserPassword string `json:"vmUserPassword,omitempty" default:""`
 	// if ConnectionName is given, the VM tries to use associtated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
-	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
+	ConnectionName string `json:"connectionName,omitempty" default:""`
 }
 
 // * Path: src/core/model/mci.go, Line: 703-707
