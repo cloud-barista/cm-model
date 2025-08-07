@@ -76,6 +76,34 @@ type TbMciDynamicReq struct {
 
 	Description string `json:"description" example:"Made in CB-TB"`
 
+	// Vm is array of VM requests for multi-cloud infrastructure
+	// Example: Multiple VM groups across different CSPs
+	// [
+	//   {
+	//     "name": "aws-group",
+	//     "subGroupSize": "3",
+	//     "commonSpec": "aws+ap-northeast-2+t3.nano",
+	//     "commonImage": "ami-01f71f215b23ba262",
+	//     "rootDiskSize": "50",
+	//     "label": {"role": "worker", "csp": "aws"}
+	//   },
+	//   {
+	//     "name": "azure-group",
+	//     "subGroupSize": "2",
+	//     "commonSpec": "azure+koreasouth+standard_b1s",
+	//     "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+	//     "rootDiskSize": "50",
+	//     "label": {"role": "head", "csp": "azure"}
+	//   },
+	//   {
+	//     "name": "gcp-group",
+	//     "subGroupSize": "1",
+	//     "commonSpec": "gcp+asia-northeast3+g1-small",
+	//     "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+	//     "rootDiskSize": "50",
+	//     "label": {"role": "test", "csp": "gcp"}
+	//   }
+	// ]
 	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
 
 	// PostCommand is for the command to bootstrap the VMs
