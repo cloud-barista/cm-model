@@ -85,7 +85,7 @@ type Binary struct {
 	NeededLibraries []string `json:"needed_libraries"`
 	BinaryPath      string   `json:"binary_path,omitempty"`
 	CustomDataPaths []string `json:"custom_data_paths"`
-	CustomConfigs   string   `json:"custom_configs"`
+	CustomConfigs   []string `json:"custom_configs"`
 }
 
 type Package struct {
@@ -95,7 +95,7 @@ type Package struct {
 	NeededPackages       string              `json:"needed_packages,omitempty" validate:"required"`
 	NeedToDeletePackages string              `json:"need_to_delete_packages,omitempty"`
 	CustomDataPaths      []string            `json:"custom_data_paths,omitempty"`
-	CustomConfigs        string              `json:"custom_configs,omitempty"`
+	CustomConfigs        []string            `json:"custom_configs,omitempty"`
 	RepoURL              string              `json:"repo_url,omitempty"`
 	GPGKeyURL            string              `json:"gpg_key_url,omitempty"`
 	RepoUseOSVersionCode bool                `json:"repo_use_os_version_code,omitempty" default:"false"`
@@ -145,21 +145,20 @@ type BinaryMigrationInfo struct {
 	NeededLibraries []string `json:"needed_libraries"`
 	BinaryPath      string   `json:"binary_path,omitempty"`
 	CustomDataPaths []string `json:"custom_data_paths"`
-	CustomConfigs   string   `json:"custom_configs"`
+	CustomConfigs   []string `json:"custom_configs"`
 }
 
 type PackageMigrationInfo struct {
-	Order                    int      `json:"order"`
-	Name                     string   `json:"name" validate:"required"`
-	Version                  string   `gorm:"version" json:"version" validate:"required"`
-	NeededPackages           []string `json:"needed_packages" validate:"required"`
-	NeedToDeletePackages     []string `json:"need_to_delete_packages"`
-	CustomDataPaths          []string `json:"custom_data_paths"`
-	CustomConfigs            string   `json:"custom_configs"`
-	RepoURL                  string   `json:"repo_url"`
-	GPGKeyURL                string   `json:"gpg_key_url"`
-	RepoUseOSVersionCode     bool     `json:"repo_use_os_version_code" default:"false"`
-	PackageMigrationConfigID string   `json:"package_migration_config_id"`
+	Order                int      `json:"order"`
+	Name                 string   `json:"name" validate:"required"`
+	Version              string   `gorm:"version" json:"version" validate:"required"`
+	NeededPackages       []string `json:"needed_packages" validate:"required"`
+	NeedToDeletePackages []string `json:"need_to_delete_packages"`
+	CustomDataPaths      []string `json:"custom_data_paths"`
+	CustomConfigs        []string `json:"custom_configs"`
+	RepoURL              string   `json:"repo_url"`
+	GPGKeyURL            string   `json:"gpg_key_url"`
+	RepoUseOSVersionCode bool     `json:"repo_use_os_version_code" default:"false"`
 }
 
 type ContainerMigrationInfo struct {
