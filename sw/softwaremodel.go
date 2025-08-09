@@ -149,17 +149,16 @@ type BinaryMigrationInfo struct {
 }
 
 type PackageMigrationInfo struct {
-	Order                    int      `json:"order"`
-	Name                     string   `json:"name" validate:"required"`
-	Version                  string   `gorm:"version" json:"version" validate:"required"`
-	NeededPackages           []string `json:"needed_packages" validate:"required"`
-	NeedToDeletePackages     []string `json:"need_to_delete_packages"`
-	CustomDataPaths          []string `json:"custom_data_paths"`
-	CustomConfigs            []string `json:"custom_configs"`
-	RepoURL                  string   `json:"repo_url"`
-	GPGKeyURL                string   `json:"gpg_key_url"`
-	RepoUseOSVersionCode     bool     `json:"repo_use_os_version_code" default:"false"`
-	PackageMigrationConfigID string   `json:"package_migration_config_id"`
+	Order                int      `json:"order"`
+	Name                 string   `json:"name" validate:"required"`
+	Version              string   `gorm:"version" json:"version" validate:"required"`
+	NeededPackages       []string `json:"needed_packages" validate:"required"`
+	NeedToDeletePackages []string `json:"need_to_delete_packages"`
+	CustomDataPaths      []string `json:"custom_data_paths"`
+	CustomConfigs        []string `json:"custom_configs"`
+	RepoURL              string   `json:"repo_url"`
+	GPGKeyURL            string   `json:"gpg_key_url"`
+	RepoUseOSVersionCode bool     `json:"repo_use_os_version_code" default:"false"`
 }
 
 type ContainerMigrationInfo struct {
