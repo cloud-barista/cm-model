@@ -32,42 +32,48 @@ This prompt will help synchronize CB-Tumblebug models by:
 
 1. **Current Version Detection**: Extract current TB version from copied-tb-model.go
 2. **Repository Setup**: Clone CB-Tumblebug repository temporarily
-3. **Direct Git Diff Execution**: Execute git diff commands directly to compare versions
-4. **Direct Model Synchronization**: Apply changes to copied-tb-model.go directly based on diff results
-5. **Cleanup**: Remove temporary repository and return to original directory
-6. **Validation**: Ensure backward compatibility and proper serialization
+3. **Git Diff Analysis**: Execute git diff to identify all changed structs between versions
+4. **Struct Dependency Mapping**: Map all existing structs in copied-tb-model.go and their dependencies
+5. **Comprehensive Synchronization**: Update ALL structs that exist in copied-tb-model.go and their dependencies
+6. **Cleanup**: Remove temporary repository and return to original directory
+7. **Validation**: Ensure compilation and proper serialization
 
-## CM-Model Dependencies Priority
+## Synchronization Principles
 
-**CRITICAL**: Only synchronize structs that are actually used by cm-model. The core dependencies are:
+**CRITICAL GUIDELINES**:
 
-### Primary Dependencies (MUST sync)
+### 1. Dependency-Based Synchronization Rule
 
-- **TbMciReq** - Used by RecommendedVmInfra.TargetVmInfra
-- **TbVNetReq** - Used by RecommendedVNet.TargetVNet
-- **TbSshKeyReq** - Used by RecommendedSshKey.TargetSshKey
-- **TbSpecInfo** - Used by RecommendedVmSpec.TargetVmSpecList ([]TbSpecInfo)
-- **TbImageInfo** - Used by RecommendedVmOsImage.TargetVmOsImageList ([]TbImageInfo)
-- **TbSecurityGroupReq** - Used by RecommendedSecurityGroup.TargetSecurityGroupList ([]TbSecurityGroupReq)
+- **ALWAYS** synchronize ALL structs currently present in copied-tb-model.go
+- **ONLY** add new structs that are **direct or indirect dependencies** of existing structs
+- **NEVER** add standalone new structs that have no dependency chain to existing structs
+- **FOLLOW dependency chains**: If existing struct A uses new struct B, and B uses new struct C, include both B and C
 
-### Supporting Dependencies (sync if changed)
+### 2. Struct Dependency Chain Analysis
 
-- **Common types**: KeyValue, Location, RegionInfo, ConnConfig, etc.
-- **Enums and constants**: OSArchitecture, OSPlatform, ImageStatus, etc.
+- Map ALL existing structs in copied-tb-model.go before synchronization
+- For each existing struct, identify ALL field types that reference other structs
+- Trace dependency chains: `ExistingStruct → NewDependency → SubDependency → ...`
+- **REJECT** new structs that cannot be traced back to any existing struct through dependency chains
 
-### Non-Critical Dependencies (skip unless referenced)
+### 3. Operations Scope
 
-- Internal CB-Tumblebug structs that are not used by cm-model's public API
-- Review/validation structs that don't impact cm-model functionality
-- Dynamic request extensions that don't affect core model structures
+- **UPDATE**: Modify existing structs to match target version (always required)
+- **CREATE**: Add new structs ONLY if they are dependencies of existing/updated structs
+- **DELETE**: Remove structs that no longer exist in target version (with impact analysis)
 
-**IMPORTANT**: Before adding new structs, verify they are referenced by cm-model's existing types.
+### 4. Dependency Chain Filtering
+
+- **INCLUDE**: New structs referenced in fields of existing structs
+- **INCLUDE**: New structs referenced in fields of already-included dependency structs
+- **EXCLUDE**: New structs that exist in CB-Tumblebug but have no dependency path to existing cm-model structs
+- **EXCLUDE**: Standalone new functionality that doesn't integrate with existing structs
 
 ## Tool Usage Guide
 
 ### Primary File Operations
 
-- **`read_file`**: Read current TB version from copied-tb-model.go header and examine model structs
+- **`read_file`**: Read current TB version from copied-tb-model.go header and examine existing structs
 - **`replace_string_in_file`**: Apply struct field changes, update version headers, and modify source path comments
 - **`get_errors`**: Validate Go compilation after synchronization changes
 
@@ -119,8 +125,6 @@ Directly apply identified changes to copied-tb-model.go:
 - **Use `replace_string_in_file`** to update struct definitions
 - Apply field additions, removals, and type changes from git diff
 - Update validation tags and JSON serialization tags
-- Preserve cm-model specific documentation enhancements
-- Update version header and source path comments
 - Update version header with target version
 - Maintain source path comments with accurate line numbers
 - Preserve cm-model specific documentation enhancements
@@ -133,62 +137,70 @@ Directly apply identified changes to copied-tb-model.go:
 
 ## Analysis Steps
 
-### 1. Version Extraction and Preparation
+### 1. Current State Analysis
 
 - **Use `read_file`** to extract current TB version from [copied-tb-model.go](../../infra/cloud-model/copied-tb-model.go) header comment
+- **Use `grep_search`** to inventory ALL existing struct definitions in copied-tb-model.go
+- **Use `semantic_search`** to map struct dependencies and relationships within copied-tb-model.go
 - **Use `create_directory`** to set up temporary workspace for CB-Tumblebug repository cloning
-- **Use `semantic_search`** to identify all existing TB models and their current source paths
 
-### 2. CB-Tumblebug Repository Preparation and Git Operations
+### 2. Repository Setup and Git Diff Analysis
 
 **Repository Setup:**
 
 - **Use `create_directory`**: Clone CB-Tumblebug repository in a temporary directory: `/tmp/sync-tb-${input:version}/`
 - **Use `run_in_terminal`**: Navigate to cloned repository (`cd /tmp/sync-tb-${input:version}/cb-tumblebug`)
-- **Use `read_file`**: Identify current version from [copied-tb-model.go](../../infra/cloud-model/copied-tb-model.go) header
 - **Use `run_in_terminal`**: Checkout target version: `git checkout ${input:version}`
 
-**Git Diff Execution:**
+**Comprehensive Git Diff Execution:**
 
-- Execute git diff command: `git diff [current_version]..${input:version} -- src/core/model/`
-- **Use `run_in_terminal`** to execute git diff commands directly in the CB-Tumblebug repository
-- **Use `get_terminal_output`** to capture complete diff output for detailed analysis
-- Focus on key model files that contain structs used by cm-model's core dependencies:
-  - `src/core/model/mci.go` (TbMciReq - PRIMARY DEPENDENCY)
-  - `src/core/model/vnet.go` (TbVNetReq - PRIMARY DEPENDENCY)
-  - `src/core/model/sshkey.go` (TbSshKeyReq - PRIMARY DEPENDENCY)
-  - `src/core/model/spec.go` (TbSpecInfo - PRIMARY DEPENDENCY)
-  - `src/core/model/image.go` (TbImageInfo - PRIMARY DEPENDENCY)
-  - `src/core/model/securitygroup.go` (TbSecurityGroupReq - PRIMARY DEPENDENCY)
-  - `src/core/model/common.go` (Supporting types: KeyValue, ConnConfig, etc.)
-  - `src/core/model/config.go` (Supporting types: Location, RegionDetail, etc.)
-  - `src/core/model/subnet.go` (TbSubnetReq - used by TbVNetReq)
+- **Use `run_in_terminal`**: Execute comprehensive diff: `git diff [current_version]..${input:version} -- src/core/model/`
+- **Use `get_terminal_output`**: Capture complete diff output for analysis
+- **Focus**: ALL model files without exclusion:
+  - `src/core/model/mci.go` (MCI-related structs)
+  - `src/core/model/vnet.go` (VNet-related structs)
+  - `src/core/model/sshkey.go` (SSH key structs)
+  - `src/core/model/spec.go` (Specification structs)
+  - `src/core/model/image.go` (Image-related structs)
+  - `src/core/model/securitygroup.go` (Security group structs)
+  - `src/core/model/subnet.go` (Subnet structs)
+  - `src/core/model/common.go` (Common types and constants)
+  - `src/core/model/config.go` (Configuration structs)
+  - All other model files that contain struct changes
 
-### 3. Git Diff Execution and Analysis
+### 3. Dependency Chain Impact Analysis
 
-Execute git diff commands in the CB-Tumblebug repository:
+**Phase 1: Existing Struct Inventory**
 
-**Primary Git Diff Command:**
+- **Use `grep_search`**: List ALL struct names currently in copied-tb-model.go: `type.*struct`
+- Create inventory of current structs: TbMciReq, TbVNetReq, TbMciInfo, etc.
+- **Use `semantic_search`**: Map field types and dependencies within each existing struct
+
+**Phase 2: Dependency Chain Mapping**
+
+For each existing struct, identify all struct-type fields:
 
 ```bash
-# In the CB-Tumblebug repository - Use run_in_terminal tool
-git diff [current_version]..${input:version} -- src/core/model/
+# Example dependency mapping for existing structs:
+# TbMciInfo → MciSshCmdResult (existing) + CreationErrors (potential new dependency)
+# TbMciReq → TbVmReq (existing) + MciCmdReq (existing) + PolicyTypes (potential constants)
+# TbVmInfo → Location (existing) + RegionInfo (existing) + ConnConfig (existing) + KeyValue (existing)
 ```
 
-**File-Specific Diffs for Detailed Analysis:**
+**Phase 3: Git Diff Analysis with Dependency Focus**
+
+- **Use `run_in_terminal`** + **`get_terminal_output`**: Execute git diff for each model file
+- **Priority**: Focus on changes to existing structs first
+- **Dependency Tracing**: For each field change in existing structs, identify if it introduces new struct dependencies
+- **Chain Following**: If a new dependency is found, recursively analyze its dependencies
+
+**Phase 4: Dependency Chain Validation**
 
 ```bash
-# Execute each command with run_in_terminal, capture output with get_terminal_output
-# PRIORITY ORDER: Focus on PRIMARY DEPENDENCIES first
-git diff [current_version]..${input:version} -- src/core/model/mci.go         # TbMciReq (PRIMARY)
-git diff [current_version]..${input:version} -- src/core/model/vnet.go        # TbVNetReq (PRIMARY)
-git diff [current_version]..${input:version} -- src/core/model/sshkey.go      # TbSshKeyReq (PRIMARY)
-git diff [current_version]..${input:version} -- src/core/model/spec.go        # TbSpecInfo (PRIMARY)
-git diff [current_version]..${input:version} -- src/core/model/image.go       # TbImageInfo (PRIMARY)
-git diff [current_version]..${input:version} -- src/core/model/securitygroup.go # TbSecurityGroupReq (PRIMARY)
-git diff [current_version]..${input:version} -- src/core/model/subnet.go      # TbSubnetReq (used by TbVNetReq)
-git diff [current_version]..${input:version} -- src/core/model/common.go      # Supporting types
-git diff [current_version]..${input:version} -- src/core/model/config.go      # Supporting types
+# For each new struct found in git diff, validate dependency chain:
+# 1. Is this struct referenced by any existing struct? → INCLUDE
+# 2. Is this struct referenced by any already-included dependency struct? → INCLUDE
+# 3. Does this struct have no dependency path to existing structs? → EXCLUDE
 ```
 
 **Diff Analysis Process:**
@@ -196,38 +208,68 @@ git diff [current_version]..${input:version} -- src/core/model/config.go      # 
 - **Use `get_terminal_output`** to capture complete diff output for each file
 - **Use `grep_search`** to identify specific struct definitions and field patterns
 - Parse diff hunks to identify:
+
   - Added lines (prefixed with `+`)
   - Removed lines (prefixed with `-`)
   - Context lines for struct identification
-- Extract struct field changes:
-  - New fields added to existing structs
-  - Removed fields from structs
-  - Modified field types or tags
-  - Updated validation tags (`validate:"..."`)
-  - Changed JSON tags (`json:"..."`)
-  - Updated examples and comments
+  - Context lines for struct identification
+    **Git Diff Parsing:**
 
-### 4. Synchronization Process
+- **Use `grep_search`** to parse git diff output for:
+  - Struct definitions: `type.*struct`
+  - Added lines: lines starting with `+`
+  - Removed lines: lines starting with `-`
+  - Modified struct fields and their types
 
-#### A. Dependency Analysis and Validation
+**Change Classification:**
 
-Before synchronizing any struct, validate its usage in cm-model:
+- Identify changes to structs that exist in copied-tb-model.go
+- Identify new struct dependencies introduced by existing struct changes
+- Identify removed struct dependencies no longer needed
 
-1. **Primary Dependency Check**: Verify the struct is used by cm-model's core types:
+### 4. Dependency-Based Synchronization Process
 
-   ```bash
-   # Use grep_search to find struct references in cm-model
-   grep -r "TbMciReq\|TbVNetReq\|TbSshKeyReq\|TbSpecInfo\|TbImageInfo\|TbSecurityGroupReq" /home/ubuntu/dev/cloud-barista/cm-model/infra/cloud-model/
-   ```
+#### A. Mandatory Synchronization Rules
 
-2. **Reference Validation**: Confirm the struct is referenced in model.go or other core files:
+**Rule 1: Update ALL Existing Structs**
 
-   ```bash
-   # Check RecommendedVmInfra and related types
-   grep -r "TargetVmInfra\|TargetVNet\|TargetSshKey\|TargetVmSpecList\|TargetVmOsImageList\|TargetSecurityGroupList" /home/ubuntu/dev/cloud-barista/cm-model/
-   ```
+- **MUST** update every struct that exists in copied-tb-model.go if changed in git diff
+- **MUST** include all field additions, modifications, and deletions
+- **NO** exceptions for "complexity" or subjective necessity judgments
 
-3. **Skip Non-Referenced Structs**: Do not add structs that are not used by cm-model's public API
+**Rule 2: Include ONLY Dependency Chain Structs**
+
+- **MUST** add new struct types referenced by existing structs (direct dependencies)
+- **MUST** add new struct types referenced by direct dependencies (indirect dependencies)
+- **MUST** include nested types, array element types, pointer target types only if they connect to existing structs
+- **EXCLUDE** new structs that have no dependency path to any existing struct
+
+**Rule 3: Dependency Chain Operations**
+
+- **CREATE**: Add new dependency structs ONLY if required by existing/updated structs
+- **UPDATE**: Modify ALL existing structs according to git diff (mandatory)
+- **DELETE**: Remove structs no longer referenced (with careful analysis)
+
+**Rule 4: Dependency Chain Validation Process**
+
+For each new struct found in CB-Tumblebug git diff:
+
+1. **Trace Back**: Can this struct be reached from any existing cm-model struct through field references?
+2. **Dependency Path**: Is there a chain: `ExistingStruct → ... → NewStruct`?
+3. **Decision**: Include ONLY if dependency path exists, otherwise EXCLUDE
+
+**Example Dependency Chain Analysis:**
+
+```go
+// ✅ INCLUDE: TbMciInfo (existing) → MciCreationErrors (new) → VmCreationError (new)
+// ✅ INCLUDE: Dependency chain exists from existing struct
+
+// ❌ EXCLUDE: ReviewMciDynamicReqInfo (standalone new struct)
+// ❌ EXCLUDE: No existing struct references this new struct
+
+// ✅ INCLUDE: SpiderVpcInfo (new) ← IF referenced by existing struct
+// ❌ EXCLUDE: SpiderVpcInfo (new) ← IF NOT referenced by existing struct
+```
 
 #### B. Version Header Update
 
@@ -241,42 +283,44 @@ Update the header comment in copied-tb-model.go:
 
 #### C. Source Path Comments Maintenance
 
-Update path comments for each affected struct:
+Update path comments for each affected struct using consistent line number rules:
 
 ```go
-// * Path: src/core/model/[filename], Line: [start]-[end]
+// * Path: src/core/model/[filename], Line: [comment_start_or_struct_start]-[end]
 ```
 
-#### D. Field Synchronization
+**Line Number Rule**: Use comment start line if struct has a comment (e.g., "// TbMciReq is struct..."), otherwise use struct definition start line (e.g., "type TbVmInfo struct").
 
-For each struct identified in git diff output **AND validated as cm-model dependency**:
+#### D. Complete Field Synchronization
 
-1. **Field Additions**: Add new fields exactly as shown in diff `+` lines
-2. **Field Removals**: Remove fields shown in diff `-` lines
-3. **Field Modifications**: Update field types, tags, and comments based on diff changes
-4. **Validation Tag Updates**: Apply validation tag changes (`validate:"required"`, etc.)
-5. **JSON Tag Updates**: Update JSON serialization tags (`json:"fieldName"`, `omitempty`)
-6. **Example Updates**: Update struct tag examples to match TB source
-7. **Comment Preservation**: Maintain cm-model specific documentation while applying TB changes
-8. **Tumblebug Comment Protection**: **NEVER DELETE** existing Tumblebug-synchronized field documentation and examples
-9. **Path Synchronization**: Update "// \* Path:" line number references to match current CB-Tumblebug source locations
+For EVERY struct that exists in copied-tb-model.go AND appears in git diff:
 
-**CRITICAL**: Only apply changes to structs that are part of cm-model's core dependencies.
+1. **Field Additions**: Add ALL new fields exactly as shown in git diff `+` lines
+2. **Field Removals**: Remove ALL fields shown in git diff `-` lines
+3. **Field Modifications**: Update ALL field types, tags, and comments based on diff changes
+4. **Validation Tag Updates**: Apply ALL validation tag changes (`validate:"required"`, etc.)
+5. **JSON Tag Updates**: Update ALL JSON serialization tags (`json:"fieldName"`, `omitempty`)
+6. **Example Updates**: Update ALL struct tag examples to match TB source
+7. **Comment Preservation**: Maintain ALL existing Tumblebug field documentation and examples
+8. **Path Synchronization**: Update ALL "// \* Path:" line number references to match CB-Tumblebug source
 
-**CRITICAL SAFEGUARDS**:
+#### E. Dependency Struct Addition
 
-- **Comment Preservation**: Preserve ALL existing field comments, examples, and documentation from CB-Tumblebug source
-- **Path Accuracy**: Verify and update Path line numbers to match actual CB-Tumblebug source file locations
-- **Documentation Enhancement**: Add new documentation from TB source while preserving existing content
+For NEW structs referenced by existing structs that appear in git diff:
 
-#### E. File Operations
+1. **Complete Addition**: Add the ENTIRE new struct definition from CB-Tumblebug source
+2. **All Fields**: Include ALL fields with complete documentation
+3. **Proper Placement**: Add in logical order near related structs
+4. **Full Documentation**: Include ALL comments, examples, and validation tags from TB source
+
+#### F. File Operations
 
 Execute file editing operations using VS Code tools:
 
-- **Use `replace_string_in_file`** to apply each struct change systematically
+- **Use `replace_string_in_file`** to apply EVERY struct change from git diff
 - **Use `read_file`** to verify changes and ensure proper context
-- **Use `get_errors`** to validate Go compilation after each major change
-- Update multiple structs sequentially based on git diff results
+- **Use `get_errors`** to validate Go compilation after each change
+- **Use `grep_search`** to verify all structs are properly synchronized
 - Maintain proper Go syntax and formatting
 - Preserve existing cm-model documentation patterns
 
@@ -289,21 +333,69 @@ After successful synchronization:
 - **Use `read_file`** to validate final changes in copied-tb-model.go
 - Return to original working directory
 
-### 6. Validation Checklist
+### 6. Path Line Number Synchronization (CRITICAL)
+
+**MANDATORY Line Number Verification Process:**
+
+- [ ] **`run_in_terminal`**: For each synchronized struct, execute `grep -n "// StructName is struct" /tmp/sync-tb-${input:version}/cb-tumblebug/src/core/model/*.go` to find actual comment start line numbers
+- [ ] **`run_in_terminal`**: For structs WITHOUT comment lines, use `grep -n "type StructName struct" /tmp/sync-tb-${input:version}/cb-tumblebug/src/core/model/[filename]` to find struct definition start line
+- [ ] **`run_in_terminal`**: For each struct, execute `sed -n 'start_line,estimated_end' /tmp/sync-tb-${input:version}/cb-tumblebug/src/core/model/[filename] | grep -n "^}"` to find exact end line
+- [ ] **`replace_string_in_file`**: Update ALL "// \* Path:" comments to match exact CB-Tumblebug source line numbers
+- [ ] **CRITICAL**: **Line Number Consistency Rule**: ALWAYS use comment start line (if exists) or struct definition start line (if no comment) as the starting line number
+- [ ] **CRITICAL**: **`read_file`**: Verify ALL Tumblebug-synchronized field comments and examples are preserved
+- [ ] **CRITICAL**: **`grep_search`**: Confirm Path line numbers match actual CB-Tumblebug source file locations
+- [ ] **CRITICAL**: **`semantic_search`**: Ensure no valuable documentation was unintentionally deleted during synchronization
+
+**Line Number Update Commands (REQUIRED):**
+
+```bash
+# For structs WITH comment lines, find comment start:
+grep -n "// StructName is struct" /tmp/sync-tb-${input:version}/cb-tumblebug/src/core/model/[filename]
+
+# For structs WITHOUT comment lines, find struct definition start:
+grep -n "type StructName struct" /tmp/sync-tb-${input:version}/cb-tumblebug/src/core/model/[filename]
+
+# Find end line (for both cases):
+sed -n 'start,estimated_end' /tmp/sync-tb-${input:version}/cb-tumblebug/src/core/model/[filename] | grep -n "^}"
+# Calculate exact end line: start_line + matched_line_number - 1
+```
+
+**Path Comment Format (EXACT):**
+
+```go
+// * Path: src/core/model/[filename], Line: [comment_start_or_struct_start]-[actual_end]
+```
+
+**Line Number Consistency Examples:**
+
+```go
+// ✅ CORRECT (Comment exists - use comment start line):
+// * Path: src/core/model/mci.go, Line: 261-314
+// TbMciDynamicReq is struct for requirements to create MCI dynamically (with default resource option)
+type TbMciDynamicReq struct {
+
+// ✅ CORRECT (No comment - use struct definition start line):
+// * Path: src/core/model/mci.go, Line: 564-634
+type TbVmInfo struct {
+```
+
+### 7. Final Validation Checklist
 
 After synchronization (use appropriate tools for each validation):
 
 - [ ] **`list_dir`**: Temporary CB-Tumblebug repository removed
 - [ ] **`run_in_terminal`**: Working directory restored to cm-model
 - [ ] **`get_errors`**: No compilation errors detected
-- [ ] **`grep_search`**: All structs have proper JSON serialization tags
-- [ ] **`semantic_search`**: Validation tags match TB source patterns
+- [ ] **`grep_search`**: All existing structs synchronized with git diff changes
+- [ ] **`semantic_search`**: All new dependency structs added ONLY if connected to existing structs
+- [ ] **Dependency Chain Verification**: No standalone new structs included without dependency path
 - [ ] **`read_file`**: Documentation is preserved and enhanced
 - [ ] **Manual Review**: Backward compatibility maintained where possible
 - [ ] **`grep_search`**: Source path comments are accurate and reflect target version
 - [ ] **`read_file`**: Version header reflects target version with change summary
-- [ ] **`semantic_search`**: Verify only cm-model dependencies are synchronized (TbMciReq, TbVNetReq, TbSshKeyReq, TbSpecInfo, TbImageInfo, TbSecurityGroupReq)
-- [ ] **`grep_search`**: Confirm no unused structs were added to copied-tb-model.go
+- [ ] **CRITICAL**: **`semantic_search`**: Verify NO orphaned structs exist (all new structs must trace back to existing structs)
+- [ ] **CRITICAL**: **Dependency Path Validation**: Each new struct has clear dependency chain to existing cm-model structs
+- [ ] **`grep_search`**: Confirm ALL dependency structs are present
 - [ ] **CRITICAL**: **`read_file`**: Verify ALL Tumblebug-synchronized field comments and examples are preserved
 - [ ] **CRITICAL**: **`grep_search`**: Confirm Path line numbers match actual CB-Tumblebug source file locations
 - [ ] **CRITICAL**: **`semantic_search`**: Ensure no valuable documentation was unintentionally deleted during synchronization
@@ -325,29 +417,32 @@ Follow the patterns and guidelines defined in:
 - **Git-Based Comparison**: Uses git diff for accurate change detection between versions
 - **Temporary Repository**: CB-Tumblebug repository is cloned temporarily and cleaned up after use
 - **Working Directory Safety**: Process saves and restores original working directory
-- **Careful Review Required**: All changes should be reviewed for backward compatibility
-- **Testing Essential**: Verify model serialization after updates
+- **Complete Synchronization**: ALL existing structs MUST be synchronized according to git diff
+- **No Arbitrary Filtering**: NEVER skip structs based on subjective complexity judgments
+- **Dependency Inclusion**: MUST include ALL dependency structs required by existing structs
 - **Documentation Critical**: Maintain comprehensive change documentation
-- **Cleanup Mandatory**: Ensure temporary files are removed after synchronization
 - **🚨 CRITICAL SAFEGUARD**: **NEVER DELETE Tumblebug-synchronized field comments** - These contain valuable examples and documentation from CB-Tumblebug source that must be preserved
 - **🚨 CRITICAL REQUIREMENT**: **Path line numbers must stay synchronized** - Always verify and update "// \* Path:" comments to match actual CB-Tumblebug source file locations
 
-### Dependency Management Guidelines
+### Complete Synchronization Guidelines
 
-- **Primary Dependencies Only**: Only synchronize structs that are actively used by cm-model
-- **Reference Validation**: Before adding any struct, verify it's referenced in cm-model's codebase
-- **Core Dependencies**: Focus on TbMciReq, TbVNetReq, TbSshKeyReq, TbSpecInfo, TbImageInfo, TbSecurityGroupReq
-- **Avoid Bloat**: Do not add internal CB-Tumblebug structs that don't impact cm-model functionality
-- **Supporting Types**: Include supporting types (KeyValue, enums, etc.) only if they're used by primary dependencies
+- **Existing Struct Rule**: ALL structs in copied-tb-model.go MUST be updated according to git diff
+- **Dependency Chain Rule**: Add new structs ONLY if they have dependency chains to existing structs
+- **No Orphaned Structs**: Do NOT include standalone new structs without dependency paths to existing structs
+- **Full Operations**: Perform CREATE (dependencies only), UPDATE (existing structs), DELETE operations as needed
+- **Complete Documentation**: Include ALL field comments, examples, and validation tags from TB source
 
-### Documentation Preservation Guidelines
+### Dependency Chain Guidelines
 
-- **Comment Safeguarding**: **ABSOLUTE REQUIREMENT** - Never delete existing Tumblebug-synchronized field comments, examples, or documentation
-- **Path Synchronization**: Always verify and update "// \* Path:" line numbers to match current CB-Tumblebug source file locations
-- **Documentation Enhancement**: Add new TB documentation while preserving all existing content
-- **Field Examples**: Maintain all `example:` tags and field documentation from both cm-model and TB sources
-- **Validation Consistency**: Preserve all validation constraints and their explanatory comments
-- **Pre-Edit Verification**: Before modifying any struct, read and document current field comments to ensure preservation
+- **Trace Dependencies**: For each new struct in git diff, verify if it's referenced by existing or dependency-connected structs
+- **Follow Chains**: Include multi-level dependencies: `ExistingStruct → NewStruct1 → NewStruct2 → ...`
+- **Exclude Orphans**: Reject new structs that cannot be traced back to existing structs
+- **Examples of Valid Chains**:
+  - `TbMciInfo (existing) → MciCreationErrors (new) → VmCreationError (new)` ✅
+  - `TbSpecInfo (existing) → NewSpecExtension (new)` ✅
+- **Examples of Invalid Chains**:
+  - `ReviewMciDynamicReqInfo (standalone new)` ❌
+  - `ProvisioningLog (standalone new)` ❌
 
 ### Tool Usage Best Practices
 
@@ -359,38 +454,39 @@ Follow the patterns and guidelines defined in:
 
 ## Expected Output
 
-1. **Current Version Extraction**: Extract current TB version from copied-tb-model.go header
+1. **Current State Analysis**: Complete inventory of existing structs in copied-tb-model.go
 2. **Repository Setup**: Clone CB-Tumblebug repository to temporary directory `/tmp/sync-tb-${input:version}/`
-3. **Git Diff Execution**: Run git diff commands and capture complete diff output
-4. **Diff Analysis Report**: Detailed analysis of struct changes from git diff results
-5. **Model Updates**: Apply changes to `copied-tb-model.go` using file editing tools
-6. **Change Summary**: List of all modifications made based on git diff output
-7. **Breaking Change Analysis**: Identification of backward compatibility issues
-8. **Testing Validation**: Go compilation and model serialization verification
-9. **Repository Cleanup**: Removal of temporary CB-Tumblebug repository
-10. **Final Validation**: Confirmation of successful synchronization in cm-model directory
+3. **Dependency Chain Analysis**: Identify git diff changes and trace dependency chains from existing structs
+4. **Change Classification**: Categorize changes into existing struct updates vs. dependency-connected new structs
+5. **Selective Synchronization**: Apply ALL changes to existing structs and add ONLY dependency-connected new structs
+6. **Full Documentation Update**: Update ALL path references and version headers
+7. **Compilation Verification**: Ensure ALL changes compile without errors
+8. **Repository Cleanup**: Removal of temporary CB-Tumblebug repository
+9. **Final Validation**: Confirmation that ALL existing structs are synchronized and dependencies complete
 
 ## Execution Steps
 
-### Phase 1: Setup and Analysis
+### Phase 1: Dependency Chain Analysis
 
 1. **`read_file`**: Read current version from copied-tb-model.go header
-2. **`create_directory`** + **`run_in_terminal`**: Create temporary directory and clone CB-Tumblebug repository
-3. **`run_in_terminal`**: Checkout target version in CB-Tumblebug repository
-4. **`run_in_terminal`** + **`get_terminal_output`**: Execute git diff commands directly
+2. **`grep_search`**: Inventory ALL existing struct definitions in copied-tb-model.go
+3. **`create_directory`** + **`run_in_terminal`**: Create temporary directory and clone CB-Tumblebug repository
+4. **`run_in_terminal`**: Checkout target version in CB-Tumblebug repository
+5. **`run_in_terminal`** + **`get_terminal_output`**: Execute comprehensive git diff commands
 
-### Phase 2: Synchronization
+### Phase 2: Selective Synchronization
 
-5. **`grep_search`** + **`semantic_search`**: Parse git diff output for struct changes
-6. **`read_file`**: **BEFORE EDITING** - Read current struct documentation to preserve existing comments
-7. **`replace_string_in_file`**: Apply changes directly to copied-tb-model.go using file editing tools
-8. **`replace_string_in_file`**: Update version header and source path comments
-9. **CRITICAL**: **`read_file`** + **`run_in_terminal`**: Verify Path line numbers against CB-Tumblebug source files
-10. **CRITICAL**: **`read_file`**: Validate that ALL Tumblebug-synchronized field comments are preserved
-11. **`get_errors`**: Validate Go syntax and compilation
+6. **`semantic_search`**: Analyze git diff output to identify ALL changes to existing structs
+7. **Dependency Chain Tracing**: For each new struct in git diff, verify dependency path to existing structs
+8. **`read_file`**: **BEFORE EDITING** - Read current struct documentation to preserve existing comments
+9. **`replace_string_in_file`**: Apply ALL struct changes to existing structs according to git diff
+10. **`replace_string_in_file`**: Add ONLY dependency-connected new structs with complete definitions
+11. **`replace_string_in_file`**: Update version header and ALL source path comments
+12. **`get_errors`**: Validate Go syntax and compilation after each major change
 
-### Phase 3: Cleanup and Validation
+### Phase 3: Dependency Chain Validation
 
-9. **`run_in_terminal`** + **`list_dir`**: Remove temporary CB-Tumblebug repository
-10. **`get_errors`** + **`read_file`**: Run final validation in cm-model directory
-11. **`semantic_search`**: Generate change summary and compatibility report
+13. **`run_in_terminal`** + **`list_dir`**: Remove temporary CB-Tumblebug repository
+14. **`get_errors`** + **`read_file`**: Run final validation in cm-model directory
+15. **`semantic_search`**: Verify NO orphaned structs exist - all new structs must connect to existing structs
+16. **Dependency Path Review**: Generate summary showing dependency chains for all included new structs
