@@ -199,3 +199,13 @@ type MigrationList struct {
 	Containers []ContainerMigrationInfo  `json:"containers"`
 	Kubernetes []KubernetesMigrationInfo `json:"kubernetes"`
 }
+
+type MigrationServer struct {
+	ConnectionInfoID string        `json:"connection_info_id"`
+	MigrationList    MigrationList `json:"migration_list"`
+	Errors           []string      `json:"errors"`
+}
+
+type MigrationListRes struct {
+	Servers []MigrationServer `json:"servers"`
+}
