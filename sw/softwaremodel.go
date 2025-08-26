@@ -138,6 +138,10 @@ type SourceGroupSoftwareProperty struct {
 	ConnectionInfoList []SourceConnectionInfoSoftwareProperty `json:"connection_info_list"`
 }
 
+type SourceSoftwareModel struct {
+	SourceSoftwareModel SourceGroupSoftwareProperty `json:"sourceSoftwareModel" validate:"required"`
+}
+
 type BinaryMigrationInfo struct {
 	Order           int      `json:"order"`
 	Name            string   `json:"name" validate:"required"`
@@ -208,4 +212,8 @@ type MigrationServer struct {
 
 type TargetGroupSoftwareProperty struct {
 	Servers []MigrationServer `json:"servers"`
+}
+
+type TargetSoftwareModel struct {
+	TargetSoftwareModel TargetGroupSoftwareProperty `json:"targetSoftwareModel" validate:"required"`
 }
