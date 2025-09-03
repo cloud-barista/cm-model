@@ -19,6 +19,7 @@ cm-model/
 │   ├── cloud-model/          # Cloud infrastructure models
 │   └── on-premise-model/     # On-premise infrastructure models
 ├── sw/                       # Software models
+├── scripts/                  # Utility scripts for analysis and maintenance
 ├── data/                     # Data storage (for future use)
 └── go.mod
 ```
@@ -50,3 +51,11 @@ replace github.com/cloud-barista/cm-model => ../cm-model
 ```
 
 Once you've tested your changes, contribute them back to the upstream cm-model repository.
+
+## Development Tools
+
+### Dependency Analysis
+
+Use the dependency analyzer script to understand struct relationships across the entire cloudmodel package and find unused components.
+
+See [`scripts/README.md`](scripts/README.md) for detailed documentation on available analysis tools.

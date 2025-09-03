@@ -2,11 +2,11 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.11.3 (includes partial failure handling and creation error tracking)
+// * Version: CB-Tumblebug v0.11.9 (commit: 8ae6bd46f3c44afa538c87bdd6a59b4fbd32da6a)
+// * Synchronized: 2025-09-03
 
-// * Path: src/core/model/mci.go, Line: 101-127
-// TbMciReq is struct for requirements to create MCI
-type TbMciReq struct {
+// MciReq is struct for requirements to create MCI
+type MciReq struct {
 	Name string `json:"name" validate:"required" example:"mci01"`
 
 	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
@@ -21,7 +21,7 @@ type TbMciReq struct {
 	PlacementAlgo string `json:"placementAlgo,omitempty"`
 	Description   string `json:"description" example:"Made in CB-TB"`
 
-	Vm []TbVmReq `json:"vm" validate:"required"`
+	SubGroups []CreateSubGroupReq `json:"subGroups" validate:"required"`
 
 	// PostCommand is for the command to bootstrap the VMs
 	PostCommand MciCmdReq `json:"postCommand" validate:"omitempty"`
@@ -33,10 +33,9 @@ type TbMciReq struct {
 	PolicyOnPartialFailure string `json:"policyOnPartialFailure" example:"continue" default:"continue" enums:"continue,rollback,refine"`
 }
 
-// * Path: src/core/model/mci.go, Line: 222-251
-// TbVmReq is struct to get requirements to create a new server instance
-type TbVmReq struct {
-	// VM name or subGroup name if is (not empty) && (> 0). If it is a group, actual VM name will be generated with -N postfix.
+// CreateSubGroupReq is struct to get requirements to create a new server instance
+type CreateSubGroupReq struct {
+	// SubGroup name of VMs. Actual VM name will be generated with -N postfix.
 	Name string `json:"name" validate:"required" example:"g1-1"`
 
 	// CspResourceId is resource identifier managed by CSP (required for option=register)
@@ -65,9 +64,8 @@ type TbVmReq struct {
 	DataDiskIds      []string `json:"dataDiskIds"`
 }
 
-// * Path: src/core/model/mci.go, Line: 261-314
-// TbMciDynamicReq is struct for requirements to create MCI dynamically (with default resource option)
-type TbMciDynamicReq struct {
+// MciDynamicReq is struct for requirements to create MCI dynamically (with default resource option)
+type MciDynamicReq struct {
 	Name string `json:"name" validate:"required" example:"mci01"`
 
 	// PolicyOnPartialFailure determines how to handle VM creation failures
@@ -79,35 +77,35 @@ type TbMciDynamicReq struct {
 	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)
 	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
 
-	// Vm is array of VM requests for multi-cloud infrastructure
+	// SubGroups is array of VM requests for multi-cloud infrastructure
 	// Example: Multiple VM groups across different CSPs
 	// [
 	//   {
 	//     "name": "aws-group",
 	//     "subGroupSize": "3",
-	//     "commonSpec": "aws+ap-northeast-2+t3.nano",
-	//     "commonImage": "ami-01f71f215b23ba262",
+	//     "specId": "aws+ap-northeast-2+t3.nano",
+	//     "imageId": "ami-01f71f215b23ba262",
 	//     "rootDiskSize": "50",
 	//     "label": {"role": "worker", "csp": "aws"}
 	//   },
 	//   {
 	//     "name": "azure-group",
 	//     "subGroupSize": "2",
-	//     "commonSpec": "azure+koreasouth+standard_b1s",
-	//     "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+	//     "specId": "azure+koreasouth+standard_b1s",
+	//     "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
 	//     "rootDiskSize": "50",
 	//     "label": {"role": "head", "csp": "azure"}
 	//   },
 	//   {
 	//     "name": "gcp-group",
 	//     "subGroupSize": "1",
-	//     "commonSpec": "gcp+asia-northeast3+g1-small",
-	//     "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+	//     "specId": "gcp+asia-northeast3+g1-small",
+	//     "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
 	//     "rootDiskSize": "50",
 	//     "label": {"role": "test", "csp": "gcp"}
 	//   }
 	// ]
-	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
+	SubGroups []CreateSubGroupDynamicReq `json:"subGroups" validate:"required"`
 
 	// PostCommand is for the command to bootstrap the VMs
 	PostCommand MciCmdReq `json:"postCommand"`
@@ -121,10 +119,9 @@ type TbMciDynamicReq struct {
 	Label map[string]string `json:"label"`
 }
 
-// * Path: src/core/model/mci.go, Line: 316-350
-// TbVmDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
-type TbVmDynamicReq struct {
-	// VM name or subGroup name if is (not empty) && (> 0). If it is a group, actual VM name will be generated with -N postfix.
+// CreateSubGroupDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
+type CreateSubGroupDynamicReq struct {
+	// SubGroup name, actual VM name will be generated with -N postfix.
 	Name string `json:"name" example:"g1"`
 
 	// if subGroupSize is (not empty) && (> 0), subGroup will be generated. VMs will be created accordingly.
@@ -135,10 +132,10 @@ type TbVmDynamicReq struct {
 
 	Description string `json:"description" example:"Created via CB-Tumblebug"`
 
-	// CommonSpec is field for id of a spec in common namespace
-	CommonSpec string `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t3.nano"`
-	// CommonImage is field for id of a image in common namespace
-	CommonImage string `json:"commonImage" validate:"required" example:"ami-01f71f215b23ba262"`
+	// SpecId is field for id of a spec in common namespace
+	SpecId string `json:"specId" validate:"required" example:"aws+ap-northeast-2+t3.nano"`
+	// ImageId is field for id of a image in common namespace
+	ImageId string `json:"imageId" validate:"required" example:"ami-01f71f215b23ba262"`
 
 	RootDiskType string `json:"rootDiskType,omitempty" example:"gp3" default:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 	RootDiskSize string `json:"rootDiskSize,omitempty" example:"50" default:"default"`  // "default", Integer (GB): ["50", ..., "1000"]
@@ -149,16 +146,14 @@ type TbVmDynamicReq struct {
 	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
 }
 
-// * Path: src/core/model/mci.go, Line: 901-905
 // MciCmdReq is struct for remote command
 type MciCmdReq struct {
 	UserName string   `json:"userName" example:"cb-user" default:""`
 	Command  []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
 }
 
-// * Path: src/core/model/mci.go, Line: 136-183
-// TbMciInfo is struct for MCI info
-type TbMciInfo struct {
+// MciInfo is struct for MCI info
+type MciInfo struct {
 	// ResourceType is the type of the resource
 	ResourceType string `json:"resourceType"`
 
@@ -188,11 +183,11 @@ type TbMciInfo struct {
 	SystemLabel string `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
 
 	// Latest system message such as error message
-	SystemMessage string `json:"systemMessage" example:"Failed because ..." default:""` // systeam-given string message
+	SystemMessage []string `json:"systemMessage"` // systeam-given string message
 
-	PlacementAlgo string     `json:"placementAlgo,omitempty"`
-	Description   string     `json:"description"`
-	Vm            []TbVmInfo `json:"vm"`
+	PlacementAlgo string   `json:"placementAlgo,omitempty"`
+	Description   string   `json:"description"`
+	Vm            []VmInfo `json:"vm"`
 
 	// List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.
 	NewVmList []string `json:"newVmList"`
@@ -207,7 +202,6 @@ type TbMciInfo struct {
 	CreationErrors *MciCreationErrors `json:"creationErrors,omitempty"`
 }
 
-// * Path: src/core/model/mci.go, Line: 186-207
 // MciCreationErrors represents errors that occurred during MCI creation
 type MciCreationErrors struct {
 	// VmObjectCreationErrors contains errors from VM object creation phase
@@ -229,7 +223,6 @@ type MciCreationErrors struct {
 	FailureHandlingStrategy string `json:"failureHandlingStrategy,omitempty"` // "rollback", "refine", "continue"
 }
 
-// * Path: src/core/model/mci.go, Line: 207-220
 // VmCreationError represents a single VM creation error
 type VmCreationError struct {
 	// VmName is the name of the VM that failed
@@ -245,7 +238,6 @@ type VmCreationError struct {
 	Timestamp string `json:"timestamp"`
 }
 
-// * Path: src/core/model/mci.go, Line: 671-706
 // StatusCountInfo is struct to count the number of VMs in each status. ex: Running=4, Suspended=8.
 type StatusCountInfo struct {
 
@@ -283,9 +275,7 @@ type StatusCountInfo struct {
 	CountUndefined int `json:"countUndefined"`
 }
 
-// * Path: src/core/model/mci.go, Line: 564-634
-// TbVmInfo is struct to define a server instance object
-type TbVmInfo struct {
+type VmInfo struct {
 	// ResourceType is the type of the resource
 	ResourceType string `json:"resourceType"`
 
@@ -357,13 +347,11 @@ type TbVmInfo struct {
 	AddtionalDetails []KeyValue `json:"addtionalDetails,omitempty"`
 }
 
-// * Path: src/core/model/mci.go, Line: 918-921
 // MciSshCmdResult is struct for Set of SshCmd Results in terms of MCI
 type MciSshCmdResult struct {
 	Results []SshCmdResult `json:"results"`
 }
 
-// * Path: src/core/model/mci.go, Line: 907-916
 // SshCmdResult is struct for SshCmd Result
 type SshCmdResult struct { // Tumblebug
 	MciId   string         `json:"mciId"`
@@ -375,7 +363,6 @@ type SshCmdResult struct { // Tumblebug
 	Err     error          `json:"err"`
 }
 
-// * Path: src/core/model/config.go, Line: 44-49
 // Location is structure for location information
 type Location struct {
 	Display   string  `mapstructure:"display" json:"display"`
@@ -383,14 +370,12 @@ type Location struct {
 	Longitude float64 `mapstructure:"longitude" json:"longitude"`
 }
 
-// * Path: src/core/model/mci.go, Line: 83-87
 // RegionInfo is struct for region information
 type RegionInfo struct {
 	Region string
 	Zone   string
 }
 
-// * Path: src/core/model/common.go, Line: 169-181
 // ConnConfig is struct for containing modified CB-Spider struct for connection config
 type ConnConfig struct {
 	ConfigName           string         `json:"configName"`
@@ -405,14 +390,12 @@ type ConnConfig struct {
 	Verified             bool           `json:"verified"`
 }
 
-// * Path: src/core/model/common.go, Line: 242-246
 // RegionZoneInfo is struct for containing region struct
 type RegionZoneInfo struct {
 	AssignedRegion string `json:"assignedRegion"`
 	AssignedZone   string `json:"assignedZone"`
 }
 
-// * Path: src/core/model/config.go, Line: 30-37
 // RegionDetail is structure for region information
 type RegionDetail struct {
 	RegionId    string   `mapstructure:"id" json:"regionId"`
@@ -422,21 +405,19 @@ type RegionDetail struct {
 	Zones       []string `mapstructure:"zone" json:"zones"`
 }
 
-// * Path: src/core/model/vnet.go, Line: 17-26
-// TbVNetReq is a struct to handle 'Create vNet' request toward CB-Tumblebug.
-type TbVNetReq struct { // Tumblebug
-	Name           string        `json:"name" validate:"required" example:"vnet00"`
-	ConnectionName string        `json:"connectionName" validate:"required" example:"aws-ap-northeast-2"`
-	CidrBlock      string        `json:"cidrBlock" example:"10.0.0.0/16"`
-	SubnetInfoList []TbSubnetReq `json:"subnetInfoList"`
-	Description    string        `json:"description" example:"vnet00 managed by CB-Tumblebug"`
+// VNetReq is a struct to handle 'Create vNet' request toward CB-Tumblebug.
+type VNetReq struct { // Tumblebug
+	Name           string      `json:"name" validate:"required" example:"vnet00"`
+	ConnectionName string      `json:"connectionName" validate:"required" example:"aws-ap-northeast-2"`
+	CidrBlock      string      `json:"cidrBlock" example:"10.0.0.0/16"`
+	SubnetInfoList []SubnetReq `json:"subnetInfoList"`
+	Description    string      `json:"description" example:"vnet00 managed by CB-Tumblebug"`
 	// todo: restore the tag list later
 	// TagList        []KeyValue    `json:"tagList,omitempty"`
 }
 
-// * Path: src/core/model/subnet.go, Line: 17-25
-// TbSubnetReq is a struct that represents TB subnet object.
-type TbSubnetReq struct { // Tumblebug
+// SubnetReq is a struct that represents TB subnet object.
+type SubnetReq struct { // Tumblebug
 	Name        string `json:"name" validate:"required" example:"subnet00"`
 	IPv4_CIDR   string `json:"ipv4_CIDR" validate:"required" example:"10.0.1.0/24"`
 	Zone        string `json:"zone,omitempty" default:""`
@@ -445,9 +426,8 @@ type TbSubnetReq struct { // Tumblebug
 	// TagList     []KeyValue `json:"tagList,omitempty"`
 }
 
-// * Path: src/core/model/sshkey.go, Line: 38-52
-// TbSshKeyReq is a struct to handle 'Create SSH key' request toward CB-Tumblebug.
-type TbSshKeyReq struct {
+// SshKeyReq is a struct to handle 'Create SSH key' request toward CB-Tumblebug.
+type SshKeyReq struct {
 	Name           string `json:"name" validate:"required"`
 	ConnectionName string `json:"connectionName" validate:"required"`
 	Description    string `json:"description"`
@@ -462,11 +442,10 @@ type TbSshKeyReq struct {
 	PrivateKey       string `json:"privateKey"`
 }
 
-// * Path: src/core/model/spec.go, Line: 118-169
-// TbSpecInfo is a struct that represents TB spec object.
-type TbSpecInfo struct { // Tumblebug
+// SpecInfo is a struct that represents TB spec object.
+type SpecInfo struct { // Tumblebug
 	// Id is unique identifier for the object
-	Id string `json:"id" example:"aws-ap-southeast-1" gorm:"primaryKey"`
+	Id string `json:"id" example:"aws+ap-southeast+csp-06eb41e14121c550a" gorm:"primaryKey"`
 	// Uid is universally unique identifier for the object, used for labelSelector
 	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
 
@@ -474,11 +453,13 @@ type TbSpecInfo struct { // Tumblebug
 	CspSpecName string `json:"cspSpecName,omitempty" example:"csp-06eb41e14121c550a"`
 
 	// Name is human-readable string to represent the object
-	Name           string `json:"name" example:"aws-ap-southeast-1"`
-	Namespace      string `json:"namespace,omitempty" example:"default" gorm:"primaryKey"`
-	ConnectionName string `json:"connectionName,omitempty"`
-	ProviderName   string `json:"providerName,omitempty"`
-	RegionName     string `json:"regionName,omitempty"`
+	Name            string  `json:"name" example:"aws-ap-southeast-1"`
+	Namespace       string  `json:"namespace,omitempty" example:"default" gorm:"primaryKey"`
+	ConnectionName  string  `json:"connectionName,omitempty"`
+	ProviderName    string  `json:"providerName,omitempty"`
+	RegionName      string  `json:"regionName,omitempty"`
+	RegionLatitude  float64 `json:"regionLatitude"`
+	RegionLongitude float64 `json:"regionLongitude"`
 	// InfraType can be one of vm|k8s|kubernetes|container, etc.
 	InfraType             string   `json:"infraType,omitempty"`
 	Architecture          string   `json:"architecture,omitempty" example:"x86_64"`
@@ -516,16 +497,14 @@ type TbSpecInfo struct { // Tumblebug
 	Details     []KeyValue `json:"details" gorm:"type:text;serializer:json"`
 }
 
-// * Path: src/core/model/common.go, Line: 29-33
 // KeyValue is struct for key-value pair
 type KeyValue struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
-// * Path: src/core/model/image.go, Line: 79-114
-// TbImageInfo is a struct that represents TB image object.
-type TbImageInfo struct {
+// ImageInfo is a struct that represents TB image object.
+type ImageInfo struct {
 	// Composite primary key
 	Namespace    string `json:"namespace" example:"default" gorm:"primaryKey"`
 	ProviderName string `json:"providerName" gorm:"primaryKey"`
@@ -546,6 +525,7 @@ type TbImageInfo struct {
 
 	IsGPUImage        bool `json:"isGPUImage,omitempty" gorm:"column:is_gpu_image" enum:"true|false" default:"false" description:"Whether the image is GPU-enabled or not."`
 	IsKubernetesImage bool `json:"isKubernetesImage,omitempty" gorm:"column:is_kubernetes_image" enum:"true|false" default:"false" description:"Whether the image is Kubernetes-enabled or not."`
+	IsBasicImage      bool `json:"isBasicImage,omitempty" gorm:"column:is_basic_image" enum:"true|false" default:"false" description:"Whether the image is a basic OS image or not."`
 
 	OSType string `json:"osType,omitempty" gorm:"column:os_type" example:"ubuntu 22.04" description:"Simplified OS name and version string"`
 
@@ -561,7 +541,6 @@ type TbImageInfo struct {
 	Description string     `json:"description,omitempty"`
 }
 
-// * Path: src/core/model/image.go, Line: 23-36
 type OSArchitecture string
 
 const (
@@ -577,7 +556,6 @@ const (
 	ArchitectureUnknown OSArchitecture = ""
 )
 
-// * Path: src/core/model/image.go, Line: 38-44
 type OSPlatform string
 
 const (
@@ -586,7 +564,6 @@ const (
 	PlatformNA OSPlatform = "NA"
 )
 
-// * Path: src/core/model/image.go, Line: 46-53
 type ImageStatus string
 
 const (
@@ -596,29 +573,29 @@ const (
 	ImageNA          ImageStatus = "NA"
 )
 
-// * Path: src/core/model/securitygroup.go, Line: 65-75
-// TbSecurityGroupReq is a struct to handle 'Create security group' request toward CB-Tumblebug.
-type TbSecurityGroupReq struct { // Tumblebug
-	Name           string                `json:"name" validate:"required"`
-	ConnectionName string                `json:"connectionName" validate:"required"`
-	VNetId         string                `json:"vNetId" validate:"required"`
-	Description    string                `json:"description"`
-	FirewallRules  *[]TbFirewallRuleInfo `json:"firewallRules"` // validate:"required"`
+// SecurityGroupReq is a struct to handle 'Create security group' request toward CB-Tumblebug.
+type SecurityGroupReq struct { // Tumblebug
+	Name           string             `json:"name" validate:"required"`
+	ConnectionName string             `json:"connectionName" validate:"required"`
+	VNetId         string             `json:"vNetId" validate:"required"`
+	Description    string             `json:"description"`
+	FirewallRules  *[]FirewallRuleReq `json:"firewallRules"` // validate:"required"`
 
 	// CspResourceId is required to register object from CSP (option=register)
 	CspResourceId string `json:"cspResourceId" example:"required for option=register only. ex: csp-06eb41e14121c550a"`
 }
 
-// * Path: src/core/model/securitygroup.go, Line: 77-84
-// TbFirewallRuleInfo is a struct to handle firewall rule info of CB-Tumblebug.
-type TbFirewallRuleInfo struct {
-	Ports     string `json:"Ports" example:"1-65535,22,5555"`
-	Protocol  string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP,ALL"`
+// FirewallRuleReq is a struct to get a request for firewall rule info of CB-Tumblebug.
+type FirewallRuleReq struct {
+	// Ports is to get multiple ports or port ranges as a string (e.g. "22,900-1000,2000-3000")
+	// This allows flexibility in specifying single ports or ranges in a comma-separated format.
+	// This field is used to handle both single ports and port ranges in a unified way.
+	// It can accept a single port (e.g. "22"), a range (e.g. "900-1000"), or multiple ports/ranges (e.g. "22,900-1000,2000-3000").
+	Ports string `json:"Ports" example:"22,900-1000,2000-3000"`
+	// Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.
+	Protocol string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP"`
+	// Direction is the direction of the rule (inbound or outbound)
 	Direction string `validate:"required" json:"Direction" example:"inbound" enums:"inbound,outbound"`
-	CIDR      string `json:"CIDR" example:"0.0.0.0/0"`
-}
-
-// TbSecurityGroupUpdateReq is a struct to handle 'Update security group' request toward CB-Tumblebug.
-type TbSecurityGroupUpdateReq struct {
-	FirewallRules []TbFirewallRuleInfo `json:"firewallRules"`
+	// CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+	CIDR string `json:"CIDR" example:"0.0.0.0/0"`
 }
