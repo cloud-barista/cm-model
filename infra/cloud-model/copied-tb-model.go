@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.11.9 (commit: 8ae6bd46f3c44afa538c87bdd6a59b4fbd32da6a)
-// * Synchronized: 2025-09-03
+// * Version: CB-Tumblebug v0.11.13 (commit: 0df66b37d0ddd3fab920f810abef5ad2bfb645d0)
+// * Synchronized: 2025-09-25 (S3-standard auth for Object Storage APIs)
 
 // MciReq is struct for requirements to create MCI
 type MciReq struct {
@@ -150,6 +150,65 @@ type CreateSubGroupDynamicReq struct {
 type MciCmdReq struct {
 	UserName string   `json:"userName" example:"cb-user" default:""`
 	Command  []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
+}
+
+// CommandExecutionStatus represents the status of command execution
+type CommandExecutionStatus string
+
+const (
+	// CommandStatusQueued indicates the command has been requested but not started
+	CommandStatusQueued CommandExecutionStatus = "Queued"
+
+	// CommandStatusHandling indicates the command is currently being processed
+	CommandStatusHandling CommandExecutionStatus = "Handling"
+
+	// CommandStatusCompleted indicates the command execution completed successfully
+	CommandStatusCompleted CommandExecutionStatus = "Completed"
+
+	// CommandStatusFailed indicates the command execution failed
+	CommandStatusFailed CommandExecutionStatus = "Failed"
+
+	// CommandStatusTimeout indicates the command execution timed out
+	CommandStatusTimeout CommandExecutionStatus = "Timeout"
+)
+
+// CommandStatusInfo represents a single remote command execution record
+type CommandStatusInfo struct {
+	// Index is sequential identifier for this command execution (1, 2, 3, ...)
+	Index int `json:"index" example:"1"`
+
+	// XRequestId is the request ID from X-Request-ID header when the command was executed
+	XRequestId string `json:"xRequestId,omitempty" example:"req-12345678-abcd-1234-efgh-123456789012"`
+
+	// CommandRequested is the original command as requested by the user
+	CommandRequested string `json:"commandRequested" example:"ls -la"`
+
+	// CommandExecuted is the actual SSH command executed on the VM (may be adjusted)
+	CommandExecuted string `json:"commandExecuted" example:"ls -la"`
+
+	// Status represents the current status of the command execution
+	Status CommandExecutionStatus `json:"status" example:"Completed"`
+
+	// StartedTime is when the command execution started
+	StartedTime string `json:"startedTime" example:"2024-01-15 10:30:00" default:""`
+
+	// CompletedTime is when the command execution completed (success or failure)
+	CompletedTime string `json:"completedTime,omitempty" example:"2024-01-15 10:30:05"`
+
+	// ElapsedTime is the duration of command execution in milliseconds
+	ElapsedTime int64 `json:"elapsedTime,omitempty" example:"5000"`
+
+	// ResultSummary provides a brief summary of the execution result
+	ResultSummary string `json:"resultSummary,omitempty" example:"Command executed successfully"`
+
+	// ErrorMessage contains error details if the execution failed
+	ErrorMessage string `json:"errorMessage,omitempty" example:"SSH connection failed"`
+
+	// Stdout contains the standard output from command execution (truncated for history)
+	Stdout string `json:"stdout,omitempty" example:"total 8\ndrwxr-xr-x 2 user user 4096 Jan 15 10:30 ."`
+
+	// Stderr contains the standard error from command execution (truncated for history)
+	Stderr string `json:"stderr,omitempty" example:""`
 }
 
 // MciInfo is struct for MCI info
@@ -343,6 +402,9 @@ type VmInfo struct {
 	CspSshKeyId      string     `json:"cspSshKeyId"`
 	VmUserName       string     `json:"vmUserName,omitempty"`
 	VmUserPassword   string     `json:"vmUserPassword,omitempty"`
+
+	// CommandStatus stores the status and history of remote commands executed on this VM
+	CommandStatus []CommandStatusInfo `json:"commandStatus,omitempty"`
 
 	AddtionalDetails []KeyValue `json:"addtionalDetails,omitempty"`
 }
