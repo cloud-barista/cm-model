@@ -82,8 +82,8 @@ type Env struct {
 type Binary struct {
 	Name            string   `json:"name" validate:"required"`
 	Version         string   `gorm:"version" json:"version" validate:"required"`
-	UIDs            []string `json:"uids" validate:"required"`
-	GIDs            []string `json:"gids" validate:"required"`
+	UIDs            []int32  `json:"uids" validate:"required"`
+	GIDs            []int32  `json:"gids" validate:"required"`
 	CmdlineSlice    []string `json:"cmdline_slice"`
 	Envs            []string `json:"envs" validate:"required"`
 	NeededLibraries []string `json:"needed_libraries"`
@@ -151,8 +151,8 @@ type BinaryMigrationInfo struct {
 	Order           int      `json:"order"`
 	Name            string   `json:"name" validate:"required"`
 	Version         string   `gorm:"version" json:"version" validate:"required"`
-	UIDs            []string `json:"uids" validate:"required"`
-	GIDs            []string `json:"gids" validate:"required"`
+	UIDs            []int32  `json:"uids" validate:"required"`
+	GIDs            []int32  `json:"gids" validate:"required"`
 	CmdlineSlice    []string `json:"cmdline_slice"`
 	Envs            []string `json:"envs" validate:"required"`
 	NeededLibraries []string `json:"needed_libraries"`
