@@ -85,7 +85,7 @@ type Binary struct {
 	UIDs            []string `json:"uids" validate:"required"`
 	GIDs            []string `json:"gids" validate:"required"`
 	CmdlineSlice    []string `json:"cmdline_slice"`
-	Environ         []string `json:"environ" validate:"required"`
+	Envs            []string `json:"envs" validate:"required"`
 	NeededLibraries []string `json:"needed_libraries"`
 	BinaryPath      string   `json:"binary_path,omitempty"`
 	CustomDataPaths []string `json:"custom_data_paths"`
