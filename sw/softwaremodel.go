@@ -82,10 +82,15 @@ type Env struct {
 type Binary struct {
 	Name            string   `json:"name" validate:"required"`
 	Version         string   `gorm:"version" json:"version" validate:"required"`
+	UIDs            []string `json:"uids" validate:"required"`
+	GIDs            []string `json:"gids" validate:"required"`
+	CmdlineSlice    []string `json:"cmdline_slice"`
+	Environ         []string `json:"environ" validate:"required"`
 	NeededLibraries []string `json:"needed_libraries"`
 	BinaryPath      string   `json:"binary_path,omitempty"`
 	CustomDataPaths []string `json:"custom_data_paths"`
 	CustomConfigs   []string `json:"custom_configs"`
+	IsWine          bool     `json:"is_wine"`
 }
 
 type Package struct {
