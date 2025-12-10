@@ -1,19 +1,18 @@
 ---
 mode: agent
-model: Claude Sonnet 4
+model: Claude Sonnet 4.5
 tools:
   [
     "read_file",
     "replace_string_in_file",
+    "multi_replace_string_in_file",
     "run_in_terminal",
     "get_terminal_output",
-    "semantic_search",
     "grep_search",
     "file_search",
     "list_dir",
     "create_directory",
     "get_errors",
-    "github_repo",
   ]
 description: "Synchronize CB-Tumblebug models in copied-tb-model.go with specified version"
 ---
@@ -58,6 +57,7 @@ This prompt will help synchronize CB-Tumblebug models by:
 
 ### 3. Operations Scope
 
+- **HEADER UPDATE**: Always update the version header with target version, commit hash, and date, regardless of struct changes (MANDATORY)
 - **UPDATE**: Modify existing structs to match target version (always required)
 - **CREATE**: Add new structs ONLY if they are dependencies of existing/updated structs
 - **DELETE**: Remove structs that no longer exist in target version (with impact analysis)
@@ -92,7 +92,8 @@ This prompt will help synchronize CB-Tumblebug models by:
 ### Primary File Operations
 
 - **`read_file`**: Read current TB version from copied-tb-model.go header and examine existing structs
-- **`replace_string_in_file`**: Apply struct field changes, update version headers, and preserve existing documentation
+- **`replace_string_in_file`**: Apply individual struct field changes, update version headers, and preserve existing documentation
+- **`multi_replace_string_in_file`**: Apply multiple struct changes simultaneously for efficiency (PREFERRED for batch updates)
 - **`get_errors`**: Validate Go compilation after synchronization changes
 
 ### Repository and Git Operations
@@ -103,7 +104,6 @@ This prompt will help synchronize CB-Tumblebug models by:
 
 ### Code Analysis and Search
 
-- **`semantic_search`**: Find existing TB model definitions and related code patterns
 - **`grep_search`**: Search for specific struct names, validation tags, and field patterns
 - **`file_search`**: Locate model files and identify synchronization targets
 - **`list_dir`**: Navigate repository structure and verify cleanup operations
@@ -114,10 +114,6 @@ This prompt will help synchronize CB-Tumblebug models by:
 - **Dependency Validation**: Verify struct relationships and ensure proper dependency chains are maintained
 - **Orphan Detection**: Identify any standalone structs that lack proper dependency connections
 - **Relationship Mapping**: Analyze field type references and struct usage patterns
-
-### External Repository Access
-
-- **`github_repo`**: Access CB-Tumblebug source code for cross-referencing and validation (if needed)
 
 ## Detailed Workflow
 
@@ -167,7 +163,7 @@ Directly apply identified changes to copied-tb-model.go:
 
 - **Use `read_file`** to extract current TB version from [copied-tb-model.go](../../infra/cloud-model/copied-tb-model.go) header comment
 - **Use `grep_search`** to inventory ALL existing struct definitions in copied-tb-model.go
-- **Use `semantic_search`** to map struct dependencies and relationships within copied-tb-model.go
+- **Use `grep_search`** to map struct dependencies and relationships within copied-tb-model.go
 - **Use `create_directory`** to set up temporary workspace for CB-Tumblebug repository cloning
 
 ### 2. Repository Setup and Git Diff Analysis
@@ -306,6 +302,8 @@ For each struct found in CB-Tumblebug git diff:
 
 #### B. Version Header Update
 
+**CRITICAL: This step is MANDATORY and must be performed even if no struct changes are detected.**
+
 Update the header comment in copied-tb-model.go to include commit hash:
 
 ```go
@@ -347,9 +345,10 @@ For NEW structs referenced by existing structs that appear in git diff:
 
 Execute file editing operations using VS Code tools:
 
-- **Use `replace_string_in_file`** to apply EVERY struct change from git diff
+- **Use `multi_replace_string_in_file`** to apply multiple struct changes from git diff simultaneously (PREFERRED)
+- **Use `replace_string_in_file`** for individual struct changes when needed
 - **Use `read_file`** to verify changes and ensure proper context
-- **Use `get_errors`** to validate Go compilation after each change
+- **Use `get_errors`** to validate Go compilation after changes
 - **Use `grep_search`** to verify all structs are properly synchronized
 - Maintain proper Go syntax and formatting
 - Preserve existing cm-model documentation patterns
@@ -367,6 +366,8 @@ After successful synchronization:
 
 **Header Information Update:**
 
+**CRITICAL: Perform this step even if no other changes were made to the file.**
+
 - [ ] **`run_in_terminal`**: Get target version commit hash: `git rev-parse HEAD`
 - [ ] **`replace_string_in_file`**: Update version header with commit hash and synchronization date
 - [ ] **CRITICAL**: **DO NOT** include individual struct path comments (// \* Path: src/core/model/...)
@@ -381,7 +382,7 @@ After synchronization (use appropriate tools for each validation):
 - [ ] **`run_in_terminal`**: Working directory restored to cm-model
 - [ ] **`get_errors`**: No compilation errors detected
 - [ ] **`grep_search`**: All existing structs synchronized with git diff changes
-- [ ] **`semantic_search`**: All new dependency structs added ONLY if connected to existing structs
+- [ ] **`grep_search`**: All new dependency structs added ONLY if connected to existing structs
 - [ ] **`grep_search`**: Verify NO "// \* Path:" comments remain in the file
 - [ ] **`read_file`**: Confirm version header includes commit hash and synchronization date
 - [ ] **Dependency Chain Verification**: No standalone new structs included without dependency path
@@ -389,12 +390,12 @@ After synchronization (use appropriate tools for each validation):
 - [ ] **Manual Review**: Backward compatibility maintained where possible
 - [ ] **`grep_search`**: Source path comments are accurate and reflect target version
 - [ ] **`read_file`**: Version header reflects target version with change summary
-- [ ] **CRITICAL**: **`semantic_search`**: Verify NO orphaned structs exist (all new structs must trace back to existing structs)
+- [ ] **CRITICAL**: **`grep_search`**: Verify NO orphaned structs exist (all new structs must trace back to existing structs)
 - [ ] **CRITICAL**: **Dependency Path Validation**: Each new struct has clear dependency chain to existing cm-model structs
 - [ ] **`grep_search`**: Confirm ALL dependency structs are present
 - [ ] **CRITICAL**: **`read_file`**: Verify ALL Tumblebug-synchronized field comments and examples are preserved
 - [ ] **CRITICAL**: **`grep_search`**: Confirm Path line numbers match actual CB-Tumblebug source file locations
-- [ ] **CRITICAL**: **`semantic_search`**: Ensure no valuable documentation was unintentionally deleted during synchronization
+- [ ] **CRITICAL**: **`read_file`**: Ensure no valuable documentation was unintentionally deleted during synchronization
 - [ ] **`run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
 
 ### 8. Dependency Analysis Report
@@ -492,13 +493,13 @@ Follow the patterns and guidelines defined in:
 
 ### Phase 2: Selective Synchronization
 
-6. **`semantic_search`**: Analyze git diff output to identify ALL changes to existing structs
+6. **`grep_search`**: Analyze git diff output to identify ALL changes to existing structs
 7. **Struct Name Change Detection**: Identify struct renames (e.g., `TbMciReq` → `MciReq`)
 8. **Dependency Chain Tracing**: For each new struct in git diff, verify dependency path to existing structs OR check if it's a renamed existing struct
 9. **`read_file`**: **BEFORE EDITING** - Read current struct documentation to preserve existing comments
-10. **`replace_string_in_file`**: Apply ALL struct changes to existing structs according to git diff, handle struct renames completely
-11. **`replace_string_in_file`**: Update all field type references when struct names change
-12. **`replace_string_in_file`**: Add ONLY dependency-connected new structs with complete definitions
+10. **`multi_replace_string_in_file`**: Apply ALL struct changes simultaneously using batch editing (PREFERRED)
+11. **`multi_replace_string_in_file`**: Update all field type references when struct names change in one operation
+12. **`multi_replace_string_in_file`**: Add ONLY dependency-connected new structs with complete definitions
 13. **`replace_string_in_file`**: Update version header and ALL source path comments
 14. **`get_errors`**: Validate Go syntax and compilation after each major change
 
@@ -506,7 +507,7 @@ Follow the patterns and guidelines defined in:
 
 15. **`run_in_terminal`** + **`list_dir`**: Remove temporary CB-Tumblebug repository
 16. **`get_errors`** + **`read_file`**: Run final validation in cm-model directory
-17. **`semantic_search`**: Verify NO orphaned structs exist - all new structs must connect to existing structs or be renamed existing structs
+17. **`grep_search`**: Verify NO orphaned structs exist - all new structs must connect to existing structs or be renamed existing structs
 18. **Struct Name Consistency Check**: Verify all struct name changes are applied consistently across all field type references
 19. **Dependency Path Review**: Generate summary showing dependency chains for all included new structs and handled renames
 20. **Reference Integrity Check**: Confirm all field type references use updated struct names
