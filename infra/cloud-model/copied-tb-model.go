@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.1 (commit: b649be9e0743e81ff36b55e628ee7b3b8d537af0)
-// * Synchronized: 2024-12-10 (ImageInfo: added ResourceType, CspImageId, SourceVmUid, SourceCspImageName, and CommandHistory fields; removed omitempty tags from several fields)
+// * Version: CB-Tumblebug v0.12.2 (commit: c8bae1b77354830d716348438cb717062d69b612)
+// * Synchronized: 2026-01-23 (RegionInfo: added JSON tags; RegionDetail: added RepresentativeZone field; CreateSubGroupDynamicReq: added Zone field; VmInfo: added SshHostKeyInfo field; Added new SshHostKeyInfo struct for TOFU SSH verification)
 
 // MciReq is struct for requirements to create MCI
 type MciReq struct {
@@ -144,6 +144,10 @@ type CreateSubGroupDynamicReq struct {
 	// if ConnectionName is given, the VM tries to use associtated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
 	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
+	// Zone is an optional field to specify the availability zone for VM placement.
+	// If specified, subnet will be created in this zone for resources like GPU VMs
+	// that may only be available in specific zones. If empty, auto-selection applies.
+	Zone string `json:"zone,omitempty" example:"ap-northeast-2a" default:""`
 }
 
 // MciCmdReq is struct for remote command
@@ -403,6 +407,9 @@ type VmInfo struct {
 	VmUserName       string     `json:"vmUserName,omitempty"`
 	VmUserPassword   string     `json:"vmUserPassword,omitempty"`
 
+	// SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification
+	SshHostKeyInfo *SshHostKeyInfo `json:"sshHostKeyInfo,omitempty"`
+
 	// CommandStatus stores the status and history of remote commands executed on this VM
 	CommandStatus []CommandStatusInfo `json:"commandStatus,omitempty"`
 
@@ -425,6 +432,18 @@ type SshCmdResult struct { // Tumblebug
 	Err     error          `json:"err"`
 }
 
+// SshHostKeyInfo is struct for SSH host key information (TOFU verification)
+type SshHostKeyInfo struct {
+	// HostKey is the SSH host public key (base64 encoded)
+	HostKey string `json:"hostKey,omitempty"`
+	// KeyType is the type of the SSH host key (e.g., ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256)
+	KeyType string `json:"keyType,omitempty" example:"ssh-ed25519"`
+	// Fingerprint is the SHA256 fingerprint of the SSH host key
+	Fingerprint string `json:"fingerprint,omitempty" example:"SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"`
+	// FirstUsedAt is the timestamp when the host key was first stored (TOFU moment)
+	FirstUsedAt string `json:"firstUsedAt,omitempty" example:"2024-01-15T10:30:00Z"`
+}
+
 // Location is structure for location information
 type Location struct {
 	Display   string  `mapstructure:"display" json:"display"`
@@ -434,8 +453,8 @@ type Location struct {
 
 // RegionInfo is struct for region information
 type RegionInfo struct {
-	Region string
-	Zone   string
+	Region string `json:"region" example:"us-east-1"`
+	Zone   string `json:"zone,omitempty" example:"us-east-1a"`
 }
 
 // ConnConfig is struct for containing modified CB-Spider struct for connection config
@@ -460,11 +479,12 @@ type RegionZoneInfo struct {
 
 // RegionDetail is structure for region information
 type RegionDetail struct {
-	RegionId    string   `mapstructure:"id" json:"regionId"`
-	RegionName  string   `mapstructure:"regionName" json:"regionName"`
-	Description string   `mapstructure:"description" json:"description"`
-	Location    Location `mapstructure:"location" json:"location"`
-	Zones       []string `mapstructure:"zone" json:"zones"`
+	RegionId           string   `mapstructure:"id" json:"regionId"`
+	RegionName         string   `mapstructure:"regionName" json:"regionName"`
+	Description        string   `mapstructure:"description" json:"description"`
+	Location           Location `mapstructure:"location" json:"location"`
+	Zones              []string `mapstructure:"zone" json:"zones"`
+	RepresentativeZone *string  `mapstructure:"representativeZone" json:"representativeZone,omitempty"`
 }
 
 // VNetReq is a struct to handle 'Create vNet' request toward CB-Tumblebug.
