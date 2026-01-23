@@ -1,19 +1,6 @@
 ---
 mode: agent
 model: Claude Sonnet 4.5
-tools:
-  [
-    "read_file",
-    "replace_string_in_file",
-    "multi_replace_string_in_file",
-    "run_in_terminal",
-    "get_terminal_output",
-    "grep_search",
-    "file_search",
-    "list_dir",
-    "create_directory",
-    "get_errors",
-  ]
 description: "Synchronize CB-Tumblebug models in copied-tb-model.go with specified version"
 ---
 
