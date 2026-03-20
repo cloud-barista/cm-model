@@ -132,6 +132,8 @@ Execute git diff commands directly:
 
 Directly apply identified changes to copied-tb-model.go:
 
+- **CRITICAL**: Use ONLY git diff output as the source of truth for all struct changes
+- **Single Source**: copied-tb-model.go is the only maintained source for TB model definitions
 - **Use `replace_string_in_file`** to update struct definitions
 - Apply field additions, removals, and type changes from git diff
 - Update validation tags and JSON serialization tags
@@ -217,7 +219,6 @@ For each existing struct, identify all struct-type fields:
 - **Use `get_terminal_output`** to capture complete diff output for each file
 - **Use `grep_search`** to identify specific struct definitions and field patterns
 - Parse diff hunks to identify:
-
   - Added lines (prefixed with `+`)
   - Removed lines (prefixed with `-`)
   - Context lines for struct identification
@@ -306,18 +307,19 @@ Update the header comment in copied-tb-model.go to include commit hash:
 
 For EVERY struct that exists in copied-tb-model.go AND appears in git diff:
 
-1. **Name Change Detection**: Check if struct name has changed (e.g., `TbMciReq` → `MciReq`)
-2. **Complete Replacement**: If name changed, replace entire struct definition with new name and content
-3. **Field Additions**: Add ALL new fields exactly as shown in git diff `+` lines
-4. **Field Removals**: Remove ALL fields shown in git diff `-` lines
-5. **Field Modifications**: Update ALL field types, tags, and comments based on diff changes
-6. **Type Reference Updates**: Update field types when referenced struct names change
-7. **Validation Tag Updates**: Apply ALL validation tag changes (`validate:"required"`, etc.)
-8. **JSON Tag Updates**: Update ALL JSON serialization tags (`json:"fieldName"`, `omitempty`)
-9. **Example Updates**: Update ALL struct tag examples to match TB source
-10. **Comment Preservation**: Maintain ALL existing Tumblebug field documentation and examples
-11. **Header Update**: Update version header with target version and commit hash
-12. **Documentation**: Preserve clear struct names and descriptions without path references
+1. **Git Diff as Source**: Use ONLY git diff output for struct changes (single source of truth)
+2. **Name Change Detection**: Check if struct name has changed (e.g., `TbMciReq` → `MciReq`)
+3. **Complete Replacement**: If name changed, replace entire struct definition with new name and content
+4. **Field Additions**: Add ALL new fields exactly as shown in git diff `+` lines
+5. **Field Removals**: Remove ALL fields shown in git diff `-` lines
+6. **Field Modifications**: Update ALL field types, tags, and comments based on diff changes
+7. **Type Reference Updates**: Update field types when referenced struct names change
+8. **Validation Tag Updates**: Apply ALL validation tag changes (`validate:"required"`, etc.)
+9. **JSON Tag Updates**: Update ALL JSON serialization tags (`json:"fieldName"`, `omitempty`)
+10. **Example Updates**: Update ALL struct tag examples to match TB source
+11. **Comment Preservation**: Maintain ALL existing Tumblebug field documentation and examples
+12. **Header Update**: Update version header with target version and commit hash
+13. **Documentation**: Preserve clear struct names and descriptions without path references
 
 #### E. Dependency Struct Addition
 
@@ -404,6 +406,9 @@ Follow the patterns and guidelines defined in:
 
 - [copilot-instructions.md](../../copilot-instructions.md) - CB-Tumblebug Integration section
 - [TB Synchronization Guidelines](../../copilot-instructions.md#cb-tumblebug-model-updates)
+- [copied-tb-model.go](../../infra/cloud-model/copied-tb-model.go) - Current synchronized TB models (single source of truth)
+
+**⚠️ CRITICAL**: **ALWAYS** use git diff output as the authoritative source for struct changes during synchronization. Do not rely on documentation or external references for struct definitions.
 
 ## Important Notes
 

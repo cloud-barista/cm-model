@@ -135,6 +135,8 @@ cm-model/
 
 - **Automated Synchronization**: Use SyncTB prompt file (`.github/prompts/sync-tb.prompt.md`) for TB model updates
 - **Version-Specific Updates**: Always specify target TB version when running SyncTB
+- **Git Diff as Source of Truth**: Always use git diff output as the authoritative source for struct changes
+- **Single Source of Truth**: [copied-tb-model.go](infra/cloud-model/copied-tb-model.go) is the only source for TB model definitions
 - **Change Validation**: Review all struct changes for backward compatibility before applying
 - **Documentation Preservation**: Maintain all existing field comments and validation patterns
 - **Testing Requirements**: Verify model serialization and ensure no compilation errors after sync
@@ -214,79 +216,23 @@ type PackageMigrationInfo struct {
 }
 ```
 
-### CB-Tumblebug Model Patterns
+### CB-Tumblebug Model Reference
 
-```go
-// MCI (Multi Cloud Infrastructure) Request Pattern
-type TbMciReq struct {
-    Name            string            `json:"name" validate:"required" example:"mci01"`
-    InstallMonAgent string            `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"`
-    Label           map[string]string `json:"label"`
-    SystemLabel     string            `json:"systemLabel" example:"" default:""`
-    PlacementAlgo   string            `json:"placementAlgo,omitempty"`
-    Description     string            `json:"description" example:"Made in CB-TB"`
-    Vm              []TbVmReq         `json:"vm" validate:"required"`
-    PostCommand     MciCmdReq         `json:"postCommand" validate:"omitempty"`
-}
-```
+CB-Tumblebug models are maintained in [infra/cloud-model/copied-tb-model.go](infra/cloud-model/copied-tb-model.go). This file contains complete struct definitions with comprehensive documentation, validation tags, and examples synchronized from the CB-Tumblebug framework.
 
-```go
-// VM Request Pattern with CSP Resource Management
-type TbVmReq struct {
-    Name             string   `json:"name" validate:"required" example:"g1-1"`
-    CspResourceId    string   `json:"cspResourceId,omitempty" example:"i-014fa6ede6ada0b2c"`
-    SubGroupSize     string   `json:"subGroupSize" example:"3" default:""`
-    Label            map[string]string `json:"label"`
-    Description      string   `json:"description" example:"Description"`
-    ConnectionName   string   `json:"connectionName" validate:"required" example:"testcloud01-seoul"`
-    SpecId           string   `json:"specId" validate:"required"`
-    ImageId          string   `json:"imageId" validate:"required"`
-    VNetId           string   `json:"vNetId" validate:"required"`
-    SubnetId         string   `json:"subnetId" validate:"required"`
-    SecurityGroupIds []string `json:"securityGroupIds" validate:"required"`
-    SshKeyId         string   `json:"sshKeyId" validate:"required"`
-    VmUserName       string   `json:"vmUserName,omitempty"`
-    VmUserPassword   string   `json:"vmUserPassword,omitempty"`
-    RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`
-    RootDiskSize     string   `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."`
-    DataDiskIds      []string `json:"dataDiskIds"`
-}
-```
+**Key Model Categories**:
 
-```go
-// Dynamic Resource Pattern with Common Specs
-type TbVmDynamicReq struct {
-    Name             string            `json:"name" example:"g1-1"`
-    SubGroupSize     string            `json:"subGroupSize" example:"3" default:"1"`
-    Label            map[string]string `json:"label"`
-    Description      string            `json:"description" example:"Description"`
-    CommonSpec       string            `json:"commonSpec" validate:"required" example:"aws+ap-northeast-2+t2.small"`
-    CommonImage      string            `json:"commonImage" validate:"required" example:"ubuntu18.04"`
-    RootDiskType     string            `json:"rootDiskType,omitempty" example:"default, TYPE1, ..." default:"default"`
-    RootDiskSize     string            `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..." default:"default"`
-    VmUserPassword   string            `json:"vmUserPassword,omitempty" default:""`
-    ConnectionName   string            `json:"connectionName,omitempty" default:""`
-}
-```
+- **MCI (Multi-Cloud Infrastructure)**: `TbMciReq`, `TbMciInfo` - Multi-cloud infrastructure deployment and management
+- **VM Resources**: `TbVmReq`, `TbVmInfo`, `TbVmDynamicReq` - Virtual machine configurations and specifications
+- **Network Resources**: `TbVNetReq`, `TbSubnetReq`, `TbSecurityGroupReq` - Network infrastructure and security
+- **Supporting Types**: `TbFirewallRuleInfo`, `KeyValue`, `RegionInfo` - Common utility types
 
-```go
-// Network Security Pattern with Firewall Rules
-type TbSecurityGroupReq struct {
-    Name           string                `json:"name" validate:"required"`
-    ConnectionName string                `json:"connectionName" validate:"required"`
-    VNetId         string                `json:"vNetId" validate:"required"`
-    Description    string                `json:"description"`
-    FirewallRules  *[]TbFirewallRuleInfo `json:"firewallRules"`
-    CspResourceId  string                `json:"cspResourceId" example:"required for option=register only"`
-}
+**Important Notes**:
 
-type TbFirewallRuleInfo struct {
-    Ports     string `json:"Ports" example:"1-65535,22,5555"`
-    Protocol  string `validate:"required" json:"Protocol" example:"TCP" enums:"TCP,UDP,ICMP,ALL"`
-    Direction string `validate:"required" json:"Direction" example:"inbound" enums:"inbound,outbound"`
-    CIDR      string `json:"CIDR" example:"0.0.0.0/0"`
-}
-```
+- All TB models include complete field documentation and examples from CB-Tumblebug source
+- Struct definitions are synchronized with specific CB-Tumblebug versions (check file header for current version)
+- Field types may change across TB versions during synchronization
+- For latest model definitions, always refer to [copied-tb-model.go](infra/cloud-model/copied-tb-model.go)
 
 ## Usage Examples
 
@@ -385,13 +331,11 @@ The SyncTB tool provides automated CB-Tumblebug model synchronization through VS
 **How to Use SyncTB**:
 
 1. **Via Chat Command**:
-
    - Open VS Code Chat (Ctrl+Shift+I or Cmd+Shift+I)
    - Type `/sync-tb` in the chat input
    - Specify the target TB version when prompted (e.g., `v0.11.2`, `v0.12.0`, `latest`)
 
 2. **Via Command Palette**:
-
    - Open Command Palette (Ctrl+Shift+P or Cmd+Shift+P)
    - Run "Chat: Run Prompt"
    - Select "sync-tb" from the list
