@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.2 (commit: c8bae1b77354830d716348438cb717062d69b612)
-// * Synchronized: 2026-01-23 (RegionInfo: added JSON tags; RegionDetail: added RepresentativeZone field; CreateSubGroupDynamicReq: added Zone field; VmInfo: added SshHostKeyInfo field; Added new SshHostKeyInfo struct for TOFU SSH verification)
+// * Version: CB-Tumblebug latest main (commit: 2a0ed610ca4b42ac0e1d005505efabe526958c68)
+// * Synchronized: 2026-03-20 (Type changes: SubGroupSize, RootDiskSize, SSHPort string→int; MciCmdReq: added TimeoutMinutes; VmInfo: added Spec/Image summary fields, RootDiskName→RootDeviceName; StatusCountInfo: added CountRegistering; CommandExecutionStatus: added Cancelled/Interrupted; Added SpecSummary and ImageSummary structs)
 
 // MciReq is struct for requirements to create MCI
 type MciReq struct {
@@ -42,7 +42,7 @@ type CreateSubGroupReq struct {
 	CspResourceId string `json:"cspResourceId,omitempty" example:"i-014fa6ede6ada0b2c"`
 
 	// if subGroupSize is (not empty) && (> 0), subGroup will be generated. VMs will be created accordingly.
-	SubGroupSize string `json:"subGroupSize" example:"3" default:""`
+	SubGroupSize int `json:"subGroupSize" example:"3" default:""`
 
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label"`
@@ -60,7 +60,7 @@ type CreateSubGroupReq struct {
 	VmUserName       string   `json:"vmUserName,omitempty"`
 	VmUserPassword   string   `json:"vmUserPassword,omitempty"`
 	RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize     string   `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
+	RootDiskSize     int      `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
 	DataDiskIds      []string `json:"dataDiskIds"`
 }
 
@@ -124,8 +124,8 @@ type CreateSubGroupDynamicReq struct {
 	// SubGroup name, actual VM name will be generated with -N postfix.
 	Name string `json:"name" example:"g1"`
 
-	// if subGroupSize is (not empty) && (> 0), subGroup will be generated. VMs will be created accordingly.
-	SubGroupSize string `json:"subGroupSize" example:"3" default:"1"`
+	// SubGroupSize is the number of VMs to create in this SubGroup. If > 0, subGroup will be generated. Default is 1.
+	SubGroupSize int `json:"subGroupSize" example:"3"`
 
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label" example:"{\"role\":\"worker\",\"env\":\"test\"}"`
@@ -138,7 +138,7 @@ type CreateSubGroupDynamicReq struct {
 	ImageId string `json:"imageId" validate:"required" example:"ami-01f71f215b23ba262"`
 
 	RootDiskType string `json:"rootDiskType,omitempty" example:"gp3" default:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize string `json:"rootDiskSize,omitempty" example:"50" default:"default"`  // "default", Integer (GB): ["50", ..., "1000"]
+	RootDiskSize int    `json:"rootDiskSize,omitempty" example:"50"`                    // Root disk size in GB. 0 = use CSP default.
 
 	VmUserPassword string `json:"vmUserPassword,omitempty" example:"" default:""`
 	// if ConnectionName is given, the VM tries to use associtated credential.
@@ -152,8 +152,15 @@ type CreateSubGroupDynamicReq struct {
 
 // MciCmdReq is struct for remote command
 type MciCmdReq struct {
-	UserName string   `json:"userName" example:"cb-user" default:""`
-	Command  []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
+	// UserName is the SSH username to use for command execution
+	UserName string `json:"userName" example:"cb-user" default:""`
+
+	// Command is the list of commands to execute
+	Command []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
+
+	// TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
+	// If not specified or set to 0, the default timeout (30 minutes) will be used
+	TimeoutMinutes int `json:"timeoutMinutes,omitempty" example:"30" default:"30"`
 }
 
 // CommandExecutionStatus represents the status of command execution
@@ -174,6 +181,12 @@ const (
 
 	// CommandStatusTimeout indicates the command execution timed out
 	CommandStatusTimeout CommandExecutionStatus = "Timeout"
+
+	// CommandStatusCancelled indicates the command was cancelled by user request
+	CommandStatusCancelled CommandExecutionStatus = "Cancelled"
+
+	// CommandStatusInterrupted indicates the command was interrupted (e.g., system restart)
+	CommandStatusInterrupted CommandExecutionStatus = "Interrupted"
 )
 
 // CommandStatusInfo represents a single remote command execution record
@@ -199,8 +212,8 @@ type CommandStatusInfo struct {
 	// CompletedTime is when the command execution completed (success or failure)
 	CompletedTime string `json:"completedTime,omitempty" example:"2024-01-15 10:30:05"`
 
-	// ElapsedTime is the duration of command execution in milliseconds
-	ElapsedTime int64 `json:"elapsedTime,omitempty" example:"5000"`
+	// ElapsedTime is the duration of command execution in seconds
+	ElapsedTime int64 `json:"elapsedTime,omitempty" example:"120"`
 
 	// ResultSummary provides a brief summary of the execution result
 	ResultSummary string `json:"resultSummary,omitempty" example:"Command executed successfully"`
@@ -334,6 +347,9 @@ type StatusCountInfo struct {
 	// CountTerminating is for counting Terminating
 	CountTerminating int `json:"countTerminating"`
 
+	// CountRegistering is for counting Registering
+	CountRegistering int `json:"countRegistering"`
+
 	// CountUndefined is for counting Undefined
 	CountUndefined int `json:"countUndefined"`
 }
@@ -379,33 +395,35 @@ type VmInfo struct {
 	Label       map[string]string `json:"label"`
 	Description string            `json:"description"`
 
-	Region       RegionInfo `json:"region"` // AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
-	PublicIP     string     `json:"publicIP"`
-	SSHPort      string     `json:"sshPort"`
-	PublicDNS    string     `json:"publicDNS"`
-	PrivateIP    string     `json:"privateIP"`
-	PrivateDNS   string     `json:"privateDNS"`
-	RootDiskType string     `json:"rootDiskType"`
-	RootDiskSize string     `json:"rootDiskSize"`
-	RootDiskName string     `json:"rootDiskName"`
+	Region         RegionInfo `json:"region"` // AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
+	PublicIP       string     `json:"publicIP"`
+	SSHPort        int        `json:"sshPort"`
+	PublicDNS      string     `json:"publicDNS"`
+	PrivateIP      string     `json:"privateIP"`
+	PrivateDNS     string     `json:"privateDNS"`
+	RootDiskType   string     `json:"rootDiskType"`
+	RootDiskSize   int        `json:"rootDiskSize"`
+	RootDeviceName string     `json:"RootDeviceName"`
 
-	ConnectionName   string     `json:"connectionName"`
-	ConnectionConfig ConnConfig `json:"connectionConfig"`
-	SpecId           string     `json:"specId"`
-	CspSpecName      string     `json:"cspSpecName"`
-	ImageId          string     `json:"imageId"`
-	CspImageName     string     `json:"cspImageName"`
-	VNetId           string     `json:"vNetId"`
-	CspVNetId        string     `json:"cspVNetId"`
-	SubnetId         string     `json:"subnetId"`
-	CspSubnetId      string     `json:"cspSubnetId"`
-	NetworkInterface string     `json:"networkInterface"`
-	SecurityGroupIds []string   `json:"securityGroupIds"`
-	DataDiskIds      []string   `json:"dataDiskIds"`
-	SshKeyId         string     `json:"sshKeyId"`
-	CspSshKeyId      string     `json:"cspSshKeyId"`
-	VmUserName       string     `json:"vmUserName,omitempty"`
-	VmUserPassword   string     `json:"vmUserPassword,omitempty"`
+	ConnectionName   string       `json:"connectionName"`
+	ConnectionConfig ConnConfig   `json:"connectionConfig"`
+	SpecId           string       `json:"specId"`
+	CspSpecName      string       `json:"cspSpecName"`
+	Spec             SpecSummary  `json:"spec,omitempty"`
+	ImageId          string       `json:"imageId"`
+	CspImageName     string       `json:"cspImageName"`
+	Image            ImageSummary `json:"image,omitempty"`
+	VNetId           string       `json:"vNetId"`
+	CspVNetId        string       `json:"cspVNetId"`
+	SubnetId         string       `json:"subnetId"`
+	CspSubnetId      string       `json:"cspSubnetId"`
+	NetworkInterface string       `json:"networkInterface"`
+	SecurityGroupIds []string     `json:"securityGroupIds"`
+	DataDiskIds      []string     `json:"dataDiskIds"`
+	SshKeyId         string       `json:"sshKeyId"`
+	CspSshKeyId      string       `json:"cspSshKeyId"`
+	VmUserName       string       `json:"vmUserName,omitempty"`
+	VmUserPassword   string       `json:"vmUserPassword,omitempty"`
 
 	// SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification
 	SshHostKeyInfo *SshHostKeyInfo `json:"sshHostKeyInfo,omitempty"`
@@ -570,13 +588,25 @@ type SpecInfo struct { // Tumblebug
 	EvaluationScore09     float32  `json:"evaluationScore09"`
 	EvaluationScore10     float32  `json:"evaluationScore10"`
 	RootDiskType          string   `json:"rootDiskType"`
-	RootDiskSize          string   `json:"rootDiskSize"`
+	RootDiskSize          int      `json:"rootDiskSize"`
 	AssociatedObjectList  []string `json:"associatedObjectList,omitempty" gorm:"type:text;serializer:json"`
 	IsAutoGenerated       bool     `json:"isAutoGenerated,omitempty"`
 
 	// SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose
 	SystemLabel string     `json:"systemLabel,omitempty" example:"Managed by CB-Tumblebug" default:""`
 	Details     []KeyValue `json:"details" gorm:"type:text;serializer:json"`
+}
+
+// SpecSummary is a lightweight struct containing essential spec information for VmInfo
+type SpecSummary struct {
+	CspSpecName         string  `json:"cspSpecName,omitempty" example:"t3.medium"`
+	VCPU                uint16  `json:"vCPU,omitempty" example:"2"`
+	MemoryGiB           float32 `json:"memoryGiB,omitempty" example:"4"`
+	AcceleratorModel    string  `json:"acceleratorModel,omitempty" example:"NVIDIA Tesla V100"`
+	AcceleratorCount    uint8   `json:"acceleratorCount,omitempty" example:"1"`
+	AcceleratorMemoryGB float32 `json:"acceleratorMemoryGB,omitempty" example:"16"`
+	AcceleratorType     string  `json:"acceleratorType,omitempty" example:"GPU"`
+	CostPerHour         float32 `json:"costPerHour,omitempty" example:"0.0416"`
 }
 
 // KeyValue is struct for key-value pair
@@ -617,7 +647,7 @@ type ImageInfo struct {
 	CreationDate string `json:"creationDate"`
 
 	IsGPUImage        bool `json:"isGPUImage" gorm:"column:is_gpu_image" enum:"true|false" default:"false" description:"Whether the image is GPU-enabled or not."`
-	IsKubernetesImage bool `json:"isKubernetesImage" gorm:"column:is_kubernetes_image" enum:"true|false" default:"false" description:"Whether the image is Kubernetes-enabled or not."`
+	IsKubernetesImage bool `json:"isKubernetesImage" gorm:"column:is_kubernetes_image" enum:"true|false" default:"false" description:"Whether this image can be used to create K8s nodes. For AWS/GCP, only type identifiers registered in cloudimage.csv are true."`
 	IsBasicImage      bool `json:"isBasicImage" gorm:"column:is_basic_image" enum:"true|false" default:"false" description:"Whether the image is a basic OS image or not."`
 
 	OSType string `json:"osType" gorm:"column:os_type" example:"ubuntu 22.04" description:"Simplified OS name and version string"`
@@ -643,6 +673,15 @@ type ImageSourceCommandHistory struct {
 	Index int `json:"index" example:"1"`
 	// CommandExecuted is the actual SSH command executed on the VM (may be adjusted)
 	CommandExecuted string `json:"commandExecuted" example:"ls -la"`
+}
+
+// ImageSummary is a lightweight struct containing essential image information for VmInfo
+type ImageSummary struct {
+	ResourceType   string         `json:"resourceType,omitempty" example:"image" description:"image or customImage"`
+	CspImageName   string         `json:"cspImageName,omitempty" example:"ami-0123456789abcdef0"`
+	OSType         string         `json:"osType" gorm:"column:os_type" example:"ubuntu 22.04" description:"Simplified OS name and version string"`
+	OSArchitecture OSArchitecture `json:"osArchitecture,omitempty" example:"x86_64"`
+	OSDistribution string         `json:"osDistribution,omitempty" example:"Ubuntu 22.04"`
 }
 
 type OSArchitecture string
@@ -681,7 +720,7 @@ const (
 type SecurityGroupReq struct { // Tumblebug
 	Name           string             `json:"name" validate:"required"`
 	ConnectionName string             `json:"connectionName" validate:"required"`
-	VNetId         string             `json:"vNetId" validate:"required"`
+	VNetId         string             `json:"vNetId"` // Optional for registration: some CSPs (e.g., Azure, Tencent, NHN) don't bind SG to VPC
 	Description    string             `json:"description"`
 	FirewallRules  *[]FirewallRuleReq `json:"firewallRules"` // validate:"required"`
 
