@@ -59,8 +59,8 @@ type CreateSubGroupReq struct {
 	SshKeyId         string   `json:"sshKeyId" validate:"required"`
 	VmUserName       string   `json:"vmUserName,omitempty"`
 	VmUserPassword   string   `json:"vmUserPassword,omitempty"`
-	RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize     int      `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
+	RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
+	RootDiskSize     int      `json:"rootDiskSize,omitempty" example:"50"`                  // "default", Integer (GB): ["50", ..., "1000"]
 	DataDiskIds      []string `json:"dataDiskIds"`
 }
 
