@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug latest main (commit: 2a0ed610ca4b42ac0e1d005505efabe526958c68)
-// * Synchronized: 2026-03-20 (Type changes: SubGroupSize, RootDiskSize, SSHPort string→int; MciCmdReq: added TimeoutMinutes; VmInfo: added Spec/Image summary fields, RootDiskName→RootDeviceName; StatusCountInfo: added CountRegistering; CommandExecutionStatus: added Cancelled/Interrupted; Added SpecSummary and ImageSummary structs)
+// * Version: CB-Tumblebug v0.12.3 (commit: 78c3744821788b8c3d41ddd5e11d2dedf77de9e9)
+// * Synchronized: 2026-03-25 (No model changes - version header update only. Changes between commits focused on OpenStack deployment enhancements, security improvements, and infrastructure refactoring)
 
 // MciReq is struct for requirements to create MCI
 type MciReq struct {
