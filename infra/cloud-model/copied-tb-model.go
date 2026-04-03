@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.3 (commit: 78c3744821788b8c3d41ddd5e11d2dedf77de9e9)
-// * Synchronized: 2026-03-25 (No model changes - version header update only. Changes between commits focused on OpenStack deployment enhancements, security improvements, and infrastructure refactoring)
+// * Version: CB-Tumblebug v0.12.5 (commit: accd857011f30e34196cabc7a1388a8b3e68d4d7)
+// * Synchronized: 2026-04-03 (Added VNet/SG template fields to MciDynamicReq and CreateSubGroupDynamicReq; other changes include credential holder management, global DNS support, and VNet template policies)
 
 // MciReq is struct for requirements to create MCI
 type MciReq struct {
@@ -117,6 +117,16 @@ type MciDynamicReq struct {
 
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label"`
+
+	// VNetTemplateId specifies the vNet template ID (from system namespace) to use when
+	// auto-creating shared vNet resources. Propagates to all SubGroups unless overridden
+	// at the SubGroup level. If empty, the default hard-coded CIDR behavior is used.
+	VNetTemplateId string `json:"vNetTemplateId,omitempty" example:"default-vnet"`
+
+	// SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
+	// when auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless
+	// overridden at the SubGroup level. If empty, the default all-open behavior is used.
+	SgTemplateId string `json:"sgTemplateId,omitempty" example:"default-sg"`
 }
 
 // CreateSubGroupDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
@@ -148,6 +158,14 @@ type CreateSubGroupDynamicReq struct {
 	// If specified, subnet will be created in this zone for resources like GPU VMs
 	// that may only be available in specific zones. If empty, auto-selection applies.
 	Zone string `json:"zone,omitempty" example:"ap-northeast-2a" default:""`
+
+	// VNetTemplateId overrides the MCI-level VNetTemplateId for this SubGroup.
+	// If empty, inherits the VNetTemplateId from the parent MciDynamicReq.
+	VNetTemplateId string `json:"vNetTemplateId,omitempty" example:""`
+
+	// SgTemplateId overrides the MCI-level SgTemplateId for this SubGroup.
+	// If empty, inherits the SgTemplateId from the parent MciDynamicReq.
+	SgTemplateId string `json:"sgTemplateId,omitempty" example:""`
 }
 
 // MciCmdReq is struct for remote command
